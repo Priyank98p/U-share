@@ -37,4 +37,4 @@ const chatSchema = new Schema(
 // compound index
 chatSchema.index({ receiverId: 1, seen: 1 });
 
-export default Chat = mongoose.model("Chat", chatSchema);
+export const Chat = mongoose.model("Chat", chatSchema);

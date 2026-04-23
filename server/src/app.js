@@ -22,7 +22,11 @@ app.use(cookieParser());
 
 // api endpoints
 import userRouter from "./routes/user.routes.js";
+import itemRouter from "./routes/item.routes.js"
+import bookingRouter from "./routes/booking.routes.js"
 
 app.use("/api/v1/users",userRouter)
+app.use("/api/v1/items",itemRouter)
+app.use("/api/v1/bookings",bookingRouter)
 
 export {app}

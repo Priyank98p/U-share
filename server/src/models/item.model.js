@@ -27,6 +27,7 @@ const itemSchema = new Schema(
         "Cameras",
         "Calculators",
         "Project Kits",
+        "Sports",
         "Others",
       ],
     },
@@ -74,4 +75,4 @@ function arrayLimit(val) {
 
 itemSchema.index({ title: 'text', description: 'text' });
 
-export default Item = mongoose.model("Item", itemSchema)
+export const Item = mongoose.model("Item", itemSchema)
