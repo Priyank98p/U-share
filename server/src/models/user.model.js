@@ -43,6 +43,11 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
+    avatar: {
+      type: String,
+      default:
+        "https://res.cloudinary.com/dolvuw9vy/image/upload/v1777029295/default-profile-picture-avatar-photo-placeholder-vector-illustration-default-profile-picture-avatar-photo-placeholder-vector-189495158_kgefvq.webp",
+    },
     isVerified: {
       type: Boolean,
       default: false,

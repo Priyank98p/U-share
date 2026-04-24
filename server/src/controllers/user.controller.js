@@ -38,11 +38,17 @@ const registerUser = asyncHandler(async (req, res) => {
       "A user with this email or username already exists",
     );
 
+  const avatarLocalPath = req.files?.avatar[0]?.path;
   const studentIdCardLocalPath = req.files?.studentIdCard[0]?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is missing");
+  }
 
   if (!studentIdCardLocalPath)
     throw new ApiError(400, "Student id card is required");
 
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
   const studentIdCardCloudinary = await uploadOnCloudinary(
     studentIdCardLocalPath,
   );
@@ -58,6 +64,7 @@ const registerUser = asyncHandler(async (req, res) => {
     department,
     year,
     studentIdCard: studentIdCardCloudinary.url,
+    avatar:avatar.url
   });
 
   const userCreated = await User.findById(user._id).select(
@@ -179,7 +186,36 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     .status(200)
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
-    .json(new ApiResponse(200, {accessToken,refreshToken}, "Access token refreshed successfully"));
+    .json(
+      new ApiResponse(
+        200,
+        { accessToken, refreshToken },
+        "Access token refreshed successfully",
+      ),
+    );
 });
 
-export { registerUser, userLogin, userLogout, refreshAccessToken };
+const updateAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req?.file.path;
+
+  if (!avatarLocalPath) throw new ApiError(400, "Avatar is required");
+
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+  if (!avatar.url) throw ApiError(400, "Error while updating avatar");
+
+  const user = await User.findByIdAndUpdate(
+    req?.user._id,
+    {
+      $set: {
+        avatar: avatar.url,
+      },
+    },
+    { new: true }
+  ).select("-password");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(201, user, "Avatar updated successfully"));
+});
+
+export { registerUser, userLogin, userLogout, refreshAccessToken, updateAvatar };

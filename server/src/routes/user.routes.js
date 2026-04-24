@@ -13,6 +13,10 @@ const router = Router();
 router.route("/register").post(
   upload.fields([
     {
+      name: "avatar",
+      maxCount:1
+    },
+    {
       name: "studentIdCard",
       maxCount: 1,
     },
@@ -22,6 +26,11 @@ router.route("/register").post(
 
 router.route("/login").post(userLogin);
 router.route("/logout").post(verifyJWT, userLogout);
+router.route("/avatar").patch(
+  verifyJWT, 
+  upload.single("avatar"),
+  updateUserAvatar
+);
 router.route("refresh-token").post(refreshAccessToken);
 
 export default router;
