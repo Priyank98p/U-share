@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { uploadOnCloudinary } from "../utils/Cloudinary.js";
 import { Item } from "../models/item.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { isValidObjectId } from "mongoose";
 
 const createListing = asyncHandler(async (req, res) => {
   const {
@@ -64,7 +65,6 @@ const createListing = asyncHandler(async (req, res) => {
 });
 
 const getAllItems = asyncHandler(async (req, res) => {
-  
   const { category, search, minPrice, maxPrice, date } = req.query;
 
   let filter = { isActive: true };
@@ -110,18 +110,146 @@ const getAllItems = asyncHandler(async (req, res) => {
 
   return res.status(200).json(
     new ApiResponse(
-      200, 
+      200,
       {
         items,
         pagination: {
           totalItems,
           currentPage: page,
-          totalPages: Math.ceil(totalItems / limit)
-        }
-      }, 
-      "Items fetched successfully"
-    )
+          totalPages: Math.ceil(totalItems / limit),
+        },
+      },
+      "Items fetched successfully",
+    ),
   );
 });
 
-export { createListing, getAllItems };
+const getItemById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!isValidObjectId(id)) {
+    throw new ApiError(400, "Invalid item id format");
+  }
+
+  const item = await Item.findById(id).populate(
+    "ownerId",
+    "fullname email department year",
+  );
+
+  if (!item) {
+    throw new ApiError(404, "Item not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, item, "Item fetched successfully"));
+});
+
+const getMyItems = asyncHandler(async (req, res) => {
+  const { active } = req.query;
+
+  let filter = { ownerId: req.user._id };
+
+  if (active !== undefined) {
+    filter.isActive = active === "true";
+  }
+
+  const items = await Item.find(filter).sort({ createdAt: -1 });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        items,
+        items.length === 0
+          ? "You haven't listed any items yet"
+          : "Inventory fetched successfully",
+      ),
+    );
+});
+
+const updateItem = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { title, description, rentalPricePerDay, condition, availableTo } =
+    req.body;
+
+  if (!isValidObjectId(id)) {
+    throw new ApiError(400, "Invalid Item ID format");
+  }
+
+  const item = await Item.findById(id);
+
+  if (!item) {
+    throw new ApiError(404, "Item not found");
+  }
+
+  if (item.ownerId.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "You do not have permission to edit this listing");
+  }
+
+  const updatedItem = await Item.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        title: title ? title.trim() : item.title,
+        description: description ? description.trim() : item.description,
+        rentalPricePerDay: rentalPricePerDay
+          ? Number(rentalPricePerDay)
+          : item.rentalPricePerDay,
+        condition: condition || item.condition,
+        availableTo: availableTo || item.availableTo,
+      },
+    },
+    {
+      new: true,
+      runValidators: true, // Ensures the new data still obeys Mongoose schema rules
+    },
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedItem, "Item updated successfully"));
+});
+
+const deleteItemListing = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!isValidObjectId(id)) {
+    throw new ApiError(400, "Invalid item id format");
+  }
+
+  const item = await Item.findById(id);
+  if (!item) {
+    throw new ApiError(404, "Item not found");
+  }
+
+  if (item.ownerId.toString() !== req.user?._id.toString()) {
+    throw new ApiError(403, "You are not authorized for deleting this listing");
+  }
+
+  await Item.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        isActive: false,
+      },
+    },
+    {
+      new: true,
+    },
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Item deleted successfully"));
+});
+
+export {
+  createListing,
+  getAllItems,
+  getItemById,
+  updateItem,
+  deleteItemListing,
+  getMyItems,
+};
