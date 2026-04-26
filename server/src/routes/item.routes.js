@@ -24,4 +24,4 @@ router.route("/my-items").get(getMyItems);
 
 router.route("/:id").get(getItemById).patch(updateItem).delete(deleteItemListing)
 
-export { router };
+export default router;

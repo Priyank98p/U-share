@@ -16,7 +16,7 @@ const itemSchema = new Schema(
     description: {
       type: String,
       required: [true, "Description helps borrowers decide"],
-      maxLength: [500, "Description cannot exceed 500 characters"],
+      maxLength: [2000, "Description cannot exceed 2000 characters"],
     },
     category: {
       type: String,
@@ -24,11 +24,10 @@ const itemSchema = new Schema(
       enum: [
         "Books",
         "Electronics",
-        "Cameras",
         "Calculators",
         "Project Kits",
         "Sports",
-        "Others",
+        "Lab & Equipment",
       ],
     },
     brand: {
