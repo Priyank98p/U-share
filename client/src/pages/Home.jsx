@@ -16,7 +16,7 @@ const Home = () => {
         const res = await axiosInstance.get("/reviews/recent");
         setReviews(res.data?.data || []);
       } catch {
-        /* silent — reviews are optional */
+        
       }
     };
     fetchReviews();

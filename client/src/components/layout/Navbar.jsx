@@ -25,6 +25,7 @@ export default function Navbar() {
   const toast = useToast();
 
   const [showCategories, setShowCategories] = useState(false);
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const catRef = useRef(null);
 
@@ -108,12 +109,12 @@ export default function Navbar() {
                 )}
               </div>
 
-              <a
-                href="/#how-it-works"
-                className="text-gray-500 hover:text-indigo-600 pb-1 font-medium transition-colors"
+              <button
+                onClick={() => setShowHowItWorks(true)}
+                className="text-gray-500 hover:text-indigo-600 pb-1 font-medium transition-colors cursor-pointer"
               >
                 How it works
-              </a>
+              </button>
             </div>
           </div>
 
@@ -203,6 +204,50 @@ export default function Navbar() {
         </nav>
       </header>
 
+      {/* How It Works Modal */}
+      {showHowItWorks && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowHowItWorks(false)}></div>
+          <div className="relative bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-300">
+            <div className="sticky top-0 bg-white/80 backdrop-blur border-b border-slate-100 p-6 flex justify-between items-center">
+              <h2 className="text-2xl font-black text-slate-900 font-heading">How U-Share Works</h2>
+              <button onClick={() => setShowHowItWorks(false)} className="p-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors cursor-pointer">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-8 space-y-8">
+              <div className="flex gap-6 items-start">
+                <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 font-black text-xl flex items-center justify-center shrink-0">1</div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Verify Your Identity</h3>
+                  <p className="text-slate-500 mt-1 leading-relaxed">Sign up with your campus email and upload your Student ID. Once verified by an admin, you can rent and list items securely.</p>
+                </div>
+              </div>
+              <div className="flex gap-6 items-start">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 font-black text-xl flex items-center justify-center shrink-0">2</div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Find or List Items</h3>
+                  <p className="text-slate-500 mt-1 leading-relaxed">Browse calculators, lab coats, tools, and more from other students. Or list your own unused gear to make extra cash.</p>
+                </div>
+              </div>
+              <div className="flex gap-6 items-start">
+                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 font-black text-xl flex items-center justify-center shrink-0">3</div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">Secure Payments & Chat</h3>
+                  <p className="text-slate-500 mt-1 leading-relaxed">Chat with owners directly to coordinate pickup. Pay securely via card, UPI, or select cash on delivery.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
+              <Button onClick={() => setShowHowItWorks(false)} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 font-bold cursor-pointer">
+                Got it, let's go!
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

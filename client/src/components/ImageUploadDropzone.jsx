@@ -9,8 +9,6 @@ function ImageUploadDropzone({ maxImages = 5, onImagesChange, className }) {
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
-    // Optional: add validation for file type/size here
-
     const newPreviews = files.slice(0, maxImages - previews.length).map((file) => ({
       file,
       url: URL.createObjectURL(file),

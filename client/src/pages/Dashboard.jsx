@@ -93,7 +93,6 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Bento Layout: Activity + Quick Actions */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Recent Activity Feed */}

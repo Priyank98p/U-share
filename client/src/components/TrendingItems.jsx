@@ -33,7 +33,6 @@ const TrendingItems = () => {
       )}
       {!isLoading && !error && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* We map over the Redux itemsList, slicing the first 8 so the homepage doesn't get too long */}
           {itemsList.slice(0, 8).map((item) => (
             <Link to={`/item/${item._id}`}>
               <div
@@ -41,7 +40,6 @@ const TrendingItems = () => {
                 className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden flex flex-col"
               >
                 <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-                  {/* Notice we use item.images[0] because Multer returns an array of URLs */}
                   <img
                     src={
                       item.images?.[0] ||
@@ -56,17 +54,14 @@ const TrendingItems = () => {
                 </div>
 
                 <div className="p-5 flex flex-col flex-grow">
-                  <Link>
-                    <h3 className="font-heading font-bold text-lg text-slate-900 mb-1 line-clamp-1 hover:text-indigo-500 transition-colors cursor-pointer">
-                      {item.title}
-                    </h3>
-                  </Link>
+                  <h3 className="font-heading font-bold text-lg text-slate-900 mb-1 line-clamp-1 group-hover:text-indigo-500 transition-colors">
+                    {item.title}
+                  </h3>
 
                   <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
                     <div>
-                      {/* Notice we map to rentalPricePerDay based on your CreateListing formData */}
                       <span className="text-xl font-bold text-indigo-600">
-                        ${item.rentalPricePerDay}
+                        ₹{item.rentalPricePerDay}
                       </span>
                       <span className="text-sm text-slate-500 font-bold">
                         /day

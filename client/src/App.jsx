@@ -16,6 +16,9 @@ import MyRentals from "./pages/MyRentals";
 import Wishlist from "./pages/Wishlist";
 import Messages from "./pages/Messages";
 import Settings from "./pages/Settings";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -37,6 +40,9 @@ function App() {
             <Route path="/wishlist" element={<Wishlist />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </div>
       </main>
