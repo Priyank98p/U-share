@@ -78,72 +78,104 @@ const createOrder = asyncHandler(async (req, res) => {
 });
 
 const verifyPayment = asyncHandler(async (req, res) => {
-    const {
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature,
-        itemId,
-        startDate,
-        endDate,
-        totalPrice,
-        paymentMethod,
-    } = req.body;
+    try {
+        const {
+            razorpay_order_id,
+            razorpay_payment_id,
+            razorpay_signature,
+            itemId,
+            startDate,
+            endDate,
+            totalPrice,
+            paymentMethod,
+        } = req.body;
+        
+        console.log("Verify Payment Request Body:", req.body);
 
-    const item = await Item.findById(itemId);
-    if (!item) throw new ApiError(404, "Item not found");
+        if (!itemId || !startDate || !endDate || totalPrice === undefined || !paymentMethod) {
+            throw new ApiError(400, "Missing required booking details");
+        }
 
-    // Safely extract ownerId
-    const ownerObjectId = item.ownerId?._id || item.ownerId;
+        const item = await Item.findById(itemId);
+        if (!item) throw new ApiError(404, "Item not found");
 
-    if (paymentMethod === "cash") {
+        const ownerId = item.ownerId?._id || item.ownerId;
+        if (!ownerId) throw new ApiError(400, "Item owner not found");
+
+        if (paymentMethod === "cash") {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                throw new ApiError(400, "Invalid rental dates provided");
+            }
+
+            const booking = await Booking.create({
+                itemId,
+                borrowerId: req.user._id,
+                ownerId,
+                startDate: start,
+                endDate: end,
+                totalPrice: Number(totalPrice),
+                deposit: item.depositAmount || 0,
+                status: "pending",
+            });
+
+            return res.status(201).json(
+                new ApiResponse(201, booking, "Booking created (Cash). Awaiting owner approval.")
+            );
+        }
+
+        // Online Payment Verification
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            throw new ApiError(400, "Payment verification details are missing");
+        }
+
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        const secret = process.env.RAZORPAY_KEY_SECRET;
+        if (!secret) {
+            console.error("CRITICAL: RAZORPAY_KEY_SECRET is missing from .env");
+            throw new ApiError(500, "Payment configuration error");
+        }
+
+        const expectedSignature = crypto
+            .createHmac("sha256", secret)
+            .update(body)
+            .digest("hex");
+
+        if (expectedSignature !== razorpay_signature) {
+            throw new ApiError(400, "Payment verification failed. Invalid signature.");
+        }
+
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            throw new ApiError(400, "Invalid rental dates provided");
+        }
+
         const booking = await Booking.create({
             itemId,
             borrowerId: req.user._id,
-            ownerId: ownerObjectId,
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
+            ownerId,
+            startDate: start,
+            endDate: end,
             totalPrice: Number(totalPrice),
             deposit: item.depositAmount || 0,
             status: "pending",
         });
 
         return res.status(201).json(
-            new ApiResponse(201, booking, "Booking created (Cash). Awaiting owner approval.")
+            new ApiResponse(201, {
+                booking,
+                paymentId: razorpay_payment_id,
+            }, "Payment verified & booking created successfully")
         );
+    } catch (error) {
+        console.error("VERIFY_PAYMENT_ERROR:", error);
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(error.statusCode || 500, error.message || "Internal Server Error during payment verification");
     }
-
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-        throw new ApiError(400, "Payment verification details are missing");
-    }
-
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
-    const secret = process.env.RAZORPAY_KEY_SECRET || "default_secret";
-    const expectedSignature = crypto
-        .createHmac("sha256", secret)
-        .update(body)
-        .digest("hex");
-
-    if (expectedSignature !== razorpay_signature) {
-        throw new ApiError(400, "Payment verification failed. Invalid signature.");
-    }
-
-    const booking = await Booking.create({
-        itemId,
-        borrowerId: req.user._id,
-        ownerId: ownerObjectId,
-        startDate: new Date(startDate),
-        endDate: new Date(endDate),
-        totalPrice: Number(totalPrice),
-        deposit: item.depositAmount || 0,
-        status: "pending",
-    });
-
-    return res.status(201).json(
-        new ApiResponse(201, {
-            booking,
-            paymentId: razorpay_payment_id,
-        }, "Payment verified & booking created successfully")
-    );
 });
 
 export { createOrder, verifyPayment };

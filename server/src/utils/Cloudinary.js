@@ -35,21 +35,16 @@ const uploadOnCloudinary = async (localPath) => {
   }
 };
 
-/**
- * Extracts the public ID from a Cloudinary URL and deletes the file.
- * e.g. https://res.cloudinary.com/xxx/image/upload/v17xxx/yyy.jpg → yyy
- */
 const deleteFromCloudinary = async (url) => {
   try {
     if (!url || !url.includes("cloudinary.com")) return null;
 
-    // Extract the public_id: everything between /upload/vXXXXX/ and the file extension
     const parts = url.split("/upload/");
     if (parts.length < 2) return null;
 
-    const withVersion = parts[1]; // e.g. v1234567890/filename.jpg
-    const withoutVersion = withVersion.replace(/^v\d+\//, ""); // e.g. filename.jpg
-    const publicId = withoutVersion.replace(/\.[^/.]+$/, ""); // e.g. filename
+    const withVersion = parts[1]; 
+    const withoutVersion = withVersion.replace(/^v\d+\//, "");
+    const publicId = withoutVersion.replace(/\.[^/.]+$/, "");
 
     const result = await cloudinary.uploader.destroy(publicId);
     console.log("Cloudinary delete result:", result);

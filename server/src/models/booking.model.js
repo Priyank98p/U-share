@@ -53,7 +53,7 @@ const bookingSchema = new Schema(
 );
 
 // Cross-Field Validation
-bookingSchema.pre("validate", function (next) {
+bookingSchema.pre("validate", function () {
   if (this.startDate && this.endDate) {
     if (this.endDate <= this.startDate) {
       this.invalidate(
@@ -62,7 +62,6 @@ bookingSchema.pre("validate", function (next) {
       );
     }
   }
-  next();
 });
 
 export const Booking = mongoose.model("Booking", bookingSchema);

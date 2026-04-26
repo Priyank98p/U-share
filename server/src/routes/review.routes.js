@@ -4,7 +4,7 @@ import { verifyJWT } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-// Public route — no auth needed for recent reviews (homepage)
+// Public route — no auth needed for recent reviews
 router.route("/recent").get(getRecentReviews);
 router.route("/item/:itemId").get(getItemsReviews);
 

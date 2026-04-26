@@ -4,6 +4,7 @@ import { User } from "../models/user.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/Cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
+import sendEmail from "../utils/sendEmail.js";
 
 const generateRefreshTokenAndAccessToken = async (userId) => {
   try {
@@ -374,12 +375,39 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const resetToken = user.getResetPasswordToken();
   await user.save({ validateBeforeSave: false });
 
-  // In a real app, send an email. For now, we return it in the response for testing.
-  const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
-  
-  return res.status(200).json(
-    new ApiResponse(200, { resetToken, resetUrl }, "Password reset link generated. (Check response or UI for the link)")
-  );
+  // Use frontend URL from env or fallback to localhost
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+
+  const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a put request to: \n\n ${resetUrl}`;
+
+  try {
+    await sendEmail({
+      email: user.email,
+      subject: "U-Share Password Reset Token",
+      message,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; color: #333;">
+          <h2>Password Reset Request</h2>
+          <p>You requested a password reset for your U-Share account. Click the button below to reset it:</p>
+          <a href="${resetUrl}" style="display: inline-block; padding: 10px 20px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+          <p>If you did not request this, please ignore this email.</p>
+          <p>This link will expire in 10 minutes.</p>
+        </div>
+      `,
+    });
+
+    return res.status(200).json(
+      new ApiResponse(200, {}, "Password reset link sent to your email.")
+    );
+  } catch (error) {
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    console.error("EMAIL_ERROR:", error);
+    throw new ApiError(500, "Email could not be sent. Please try again later.");
+  }
 });
 
 const resetPassword = asyncHandler(async (req, res) => {

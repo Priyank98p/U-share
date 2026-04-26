@@ -5,7 +5,7 @@ export const initializeChatSocket = () => {
   io.on("connection", (socket) => {
     console.log("Socket connected:", socket.id);
 
-    // Join a user-to-user room (sorted IDs to ensure same room for both users)
+    // Join a user-to-user room
     socket.on("join_room", (roomId) => {
       socket.join(roomId);
       console.log(`Socket ${socket.id} joined room: ${roomId}`);

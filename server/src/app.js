@@ -51,6 +51,7 @@ import bookingRouter from "./routes/booking.routes.js";
 import chatRouter from "./routes/chat.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 import reviewRouter from "./routes/review.routes.js";
+import adminRouter from "./routes/admin.routes.js";
 
 // Apply auth rate limiter on login/register only
 app.use("/api/v1/users/login", authLimiter);
@@ -65,13 +66,29 @@ app.use("/api/v1/bookings", bookingRouter);
 app.use("/api/v1/chat", chatRouter);
 app.use("/api/v1/payment", paymentRouter);
 app.use("/api/v1/reviews", reviewRouter);
+app.use("/api/v1/admin", adminRouter);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
+
+  let statusCode = err.statusCode || 500;
+  let message = err.message || "Internal Server Error";
+
+  // Handle Mongoose Validation Error
+  if (err.name === "ValidationError") {
+    statusCode = 400;
+    message = Object.values(err.errors).map(val => val.message).join(", ");
+  }
+
+  // Handle Mongoose Cast Error 
+  if (err.name === "CastError") {
+    statusCode = 400;
+    message = `Invalid ${err.path}: ${err.value}`;
+  }
+
   res.status(statusCode).json({
     success: false,
-    message: err.message || "Internal Server Error",
+    message,
     errors: err.errors || [],
     stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
   });
