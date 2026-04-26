@@ -13,8 +13,6 @@ import {
   ThumbsUp,
   Edit3,
   MapPin,
-  ChevronLeft,
-  ChevronRight,
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
@@ -38,8 +36,10 @@ export default function CreateListing() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [apiError, setApiError] = useState(null);
   const [visible, setVisible] = useState("1");
-
   const [imageFile, setImageFile] = useState(null);
+  const [availableFrom, setAvailableFrom] = useState("");
+  const [availableTo, setAvailableTo] = useState("");
+  const [pickupLocation, setPickupLocation] = useState("");
 
   const {
     register,
@@ -75,8 +75,10 @@ export default function CreateListing() {
       formData.append("rentalPricePerDay", data.price);
       formData.append("depositAmount", data.deposit);
       formData.append("condition", condition);
+      if (availableFrom) formData.append("availableFrom", availableFrom);
+      if (availableTo) formData.append("availableTo", availableTo);
+      if (pickupLocation) formData.append("pickupLocation", pickupLocation);
 
-      // FIXED: Use the state variable `imageFile`, NOT `data.imageFile`
       formData.append("images", imageFile);
 
       const response = await axiosInstance.post("/items/create", formData, {
@@ -90,7 +92,7 @@ export default function CreateListing() {
       setShowSuccess(true);
 
       setTimeout(() => {
-        navigate("/my-listing");
+        navigate("/my-listings");
       }, 2000);
     } catch (error) {
       console.log("Upload failed", error);
@@ -102,7 +104,7 @@ export default function CreateListing() {
   };
 
   return (
-    <div className="max-w-[1280px] mx-auto px-6 py-8 w-full">
+    <div className="max-w-[1280px] mx-auto px-6 py-8 w-full animate-in fade-in duration-500">
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 relative">
         {/* LEFT SIDEBAR: Stepper Navigation */}
         <aside className="hidden lg:block lg:col-span-3">
@@ -194,7 +196,7 @@ export default function CreateListing() {
             )}
             {/* Item Details */}
             {visible === "1" && (
-              <section className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200">
+              <section className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 animate-in slide-in-from-right-8 fade-in duration-300">
                 <div className="flex items-center justify-between mb-8">
                   <h2 className="font-heading text-2xl font-medium text-slate-900">
                     Item Details
@@ -363,7 +365,7 @@ export default function CreateListing() {
 
             {/* Pricing */}
             {visible === "2" && (
-              <section className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200">
+              <section className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 animate-in slide-in-from-right-8 fade-in duration-300">
                 <div className="flex items-center justify-between mb-8">
                   <h2 className="font-heading text-2xl font-medium text-slate-900 mb-">
                     Pricing
@@ -420,32 +422,32 @@ export default function CreateListing() {
                   </div>
 
                   {/* Earnings Estimate Calculator */}
-                  <div className="p-6 bg-indigo-100 rounded-2xl flex flex-col justify-between text-black shadow-xl">
+                  <div className="p-6 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl flex flex-col justify-between text-white shadow-xl shadow-indigo-600/30 border border-indigo-500/50">
                     <div>
-                      <h4 className="font-medium mb-1">Earnings Estimate</h4>
-                      <p className="text-xs text-slate-600 mb-6 font-medium">
+                      <h4 className="font-bold text-lg mb-1 tracking-tight text-white/90">Earnings Estimate</h4>
+                      <p className="text-xs text-indigo-200 mb-6 font-medium">
                         Based on a typical 7-day rental period.
                       </p>
 
-                      <div className="flex justify-between items-center py-3 border-b border-slate-400">
-                        <span className="text-sm font-medium">
+                      <div className="flex justify-between items-center py-3 border-b border-indigo-400/30">
+                        <span className="text-sm font-medium text-indigo-100">
                           7 Days Rental
                         </span>
-                        <span className="font-medium">
-                          ₹{estimatedWeeklyEarnings}
+                        <span className="font-bold text-indigo-50">
+                          ${estimatedWeeklyEarnings}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center py-3 border-b border-slate-400 text-rose-500">
+                      <div className="flex justify-between items-center py-3 border-b border-indigo-400/30 text-rose-300">
                         <span className="text-sm font-medium">
                           Service Fee (5%)
                         </span>
-                        <span className="font-medium">-₹{serviceFee}</span>
+                        <span className="font-bold">-₹{serviceFee}</span>
                       </div>
                       <div className="flex justify-between items-center pt-5">
-                        <span className="font-medium text-indigo-500">
+                        <span className="font-bold text-indigo-100 uppercase tracking-wider text-xs">
                           Your Total Earnings
                         </span>
-                        <span className="text-2xl font-heading font-extramedium text-indigo-500">
+                        <span className="text-3xl font-heading font-black text-white drop-shadow-md">
                           ₹{totalEarnings}
                         </span>
                       </div>
@@ -457,7 +459,7 @@ export default function CreateListing() {
 
             {/* Availability & Location */}
             {visible === "3" && (
-              <section className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200">
+              <section className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 animate-in slide-in-from-right-8 fade-in duration-300">
                 <div className="flex items-center justify-between mb-8">
                   <h2 className="font-heading text-2xl font-medium text-slate-900 ">
                     Availability & Pickup
@@ -470,98 +472,36 @@ export default function CreateListing() {
                 <div className="grid md:grid-cols-2 gap-12">
                   {/* Mock Calendar */}
                   <div className="space-y-4">
-                    <label className="block font-medium text-slate-900">
-                      Available Dates
-                    </label>
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm">
-                      <div className="flex justify-between items-center mb-4 px-2">
-                        <button
-                          type="button"
-                          className="p-1 hover:bg-slate-200 rounded-full transition-colors"
-                        >
-                          <ChevronLeft className="w-5 h-5 text-slate-600" />
-                        </button>
-                        <span className="font-medium text-sm text-slate-900">
-                          October 2025
-                        </span>
-                        <button
-                          type="button"
-                          className="p-1 hover:bg-slate-200 rounded-full transition-colors"
-                        >
-                          <ChevronRight className="w-5 h-5 text-slate-600" />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-7 gap-1 text-center mb-2">
-                        {["S", "M", "T", "W", "T", "F", "S"].map((d) => (
-                          <div
-                            key={d}
-                            className="text-[10px] font-medium text-slate-400"
-                          >
-                            {d}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="grid grid-cols-7 gap-1 text-center">
-                        <div className="h-8 flex items-center justify-center text-sm text-slate-300">
-                          29
-                        </div>
-                        <div className="h-8 flex items-center justify-center text-sm text-slate-300">
-                          30
-                        </div>
-                        {[1, 2, 3, 4, 5].map((d) => (
-                          <div
-                            key={d}
-                            className="h-8 flex items-center justify-center text-sm font-medium hover:bg-indigo-50 hover:text-indigo-600 rounded-lg cursor-pointer transition-colors"
-                          >
-                            {d}
-                          </div>
-                        ))}
-                        <div className="h-8 flex items-center justify-center text-sm bg-indigo-600 text-white rounded-lg font-medium shadow-sm">
-                          6
-                        </div>
-                        <div className="h-8 flex items-center justify-center text-sm bg-indigo-100 text-indigo-600 rounded-lg font-medium">
-                          7
-                        </div>
-                        <div className="h-8 flex items-center justify-center text-sm bg-indigo-100 text-indigo-600 rounded-lg font-medium">
-                          8
-                        </div>
-                        <div className="h-8 flex items-center justify-center text-sm bg-indigo-600 text-white rounded-lg font-medium shadow-sm">
-                          9
-                        </div>
-                        {[10, 11, 12].map((d) => (
-                          <div
-                            key={d}
-                            className="h-8 flex items-center justify-center text-sm font-medium hover:bg-indigo-50 hover:text-indigo-600 rounded-lg cursor-pointer transition-colors"
-                          >
-                            {d}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    <label className="block font-medium text-slate-900">Available From</label>
+                    <input
+                      type="date"
+                      value={availableFrom}
+                      min={new Date().toISOString().split("T")[0]}
+                      onChange={(e) => setAvailableFrom(e.target.value)}
+                      className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none"
+                    />
+                    <label className="block font-medium text-slate-900 mt-4">Available To (optional)</label>
+                    <input
+                      type="date"
+                      value={availableTo}
+                      min={availableFrom || new Date().toISOString().split("T")[0]}
+                      onChange={(e) => setAvailableTo(e.target.value)}
+                      className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none"
+                    />
                   </div>
 
-                  {/* Location Picker */}
                   <div className="space-y-4">
-                    <label className="block font-medium text-slate-900">
-                      Pickup Location
-                    </label>
+                    <label className="block font-medium text-slate-900">Pickup Location</label>
                     <div className="relative">
                       <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                       <Input
                         className="h-12 pl-11 rounded-xl bg-slate-50 border-slate-200 font-medium"
-                        placeholder="Search campus location..."
+                        placeholder="e.g. Library Block B, Room 204"
+                        value={pickupLocation}
+                        onChange={(e) => setPickupLocation(e.target.value)}
                       />
                     </div>
-                    <div className="h-40 w-full rounded-2xl bg-slate-100 overflow-hidden border border-slate-200 relative group cursor-pointer">
-                      <img
-                        src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&q=80"
-                        alt="Map"
-                        className="w-full h-full object-cover grayscale opacity-50 group-hover:opacity-70 transition-opacity"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="w-8 h-8 bg-indigo-600 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
-                      </div>
-                    </div>
+                    <p className="text-xs text-slate-400 font-medium">Where should the borrower pick up the item?</p>
                   </div>
                 </div>
               </section>
@@ -574,6 +514,12 @@ export default function CreateListing() {
                   type="button"
                   variant="ghost"
                   className="w-full sm:w-auto font-medium text-slate-500 h-12 rounded-xl"
+                  onClick={() => {
+                    // Save draft to localStorage
+                    const draftData = { condition, availableFrom, availableTo, pickupLocation };
+                    localStorage.setItem("u-share-listing-draft", JSON.stringify(draftData));
+                    alert("Draft saved! Come back anytime to continue.");
+                  }}
                 >
                   Save Draft
                 </Button>
@@ -582,13 +528,14 @@ export default function CreateListing() {
                     type="button"
                     variant="outline"
                     className="w-full sm:w-auto cursor-pointer font-medium h-12 rounded-xl px-8 border border-gray-400"
+                    onClick={() => setVisible("2")}
                   >
                     Back
                   </Button>
                   <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full sm:w-auto font-medium h-12 cursor-pointer rounded-xl px-10 bg-indigo-600 shadow-lg shadow-indigo-600/20 text-white text-md"
+                    className="w-full sm:w-auto font-bold h-12 cursor-pointer rounded-xl px-10 bg-indigo-600 shadow-lg shadow-indigo-600/20 text-white text-md hover:bg-indigo-700 transition-colors"
                   >
                     {isSubmitting ? "Processing..." : "List Item Now"}
                   </Button>

@@ -11,6 +11,11 @@ import MyListings from "./pages/MyListings";
 import Browse from "./pages/Browse";
 import CreateListing from "./pages/CreateListing";
 import ScrollToTop from "./components/ScrollToTop";
+import MyRentals from "./pages/MyRentals";
+
+import Wishlist from "./pages/Wishlist";
+import Messages from "./pages/Messages";
+import Settings from "./pages/Settings";
 
 function App() {
   return (
@@ -24,10 +29,14 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/browse" element={<Browse/>}/>
-            <Route path="/item/:id" element={<ItemDetail/>} />
+            <Route path="/browse" element={<Browse />} />
+            <Route path="/item/:id" element={<ItemDetail />} />
             <Route path="/my-listings" element={<MyListings />} />
+            <Route path="/my-rentals" element={<MyRentals />} />
             <Route path="/create-listing" element={<CreateListing />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </div>
       </main>

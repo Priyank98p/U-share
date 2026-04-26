@@ -4,9 +4,9 @@ import axiosInstance from "../api/axiosInstance";
 // 🚀 Async Thunk: Fetches all items from your backend
 export const fetchAllItems = createAsyncThunk(
   "items/fetchAll",
-  async (_, thunkAPI) => {
+  async (params = {}, thunkAPI) => {
     try {
-      const response = await axiosInstance.get("/items/");
+      const response = await axiosInstance.get("/items/", { params });
       
       // 🧠 SDE FIX 1: Debugging Log
       console.log("Raw Backend Response:", response.data); 
