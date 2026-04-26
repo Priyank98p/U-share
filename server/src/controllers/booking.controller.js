@@ -67,13 +67,14 @@ const createBooking = asyncHandler(async (req, res) => {
 });
 
 const updateBookingStatus = asyncHandler(async (req, res) => {
-  const { bookindId, status } = req.body;
+  const { bookingId } = req.params;
+  const { status } = req.body;
 
   if (!["approved", "rejected"].includes(status)) {
     throw new ApiError(400, "Invalid status update");
   }
 
-  const booking = await Booking.findById(bookindId);
+  const booking = await Booking.findById(bookingId);
   if (!booking) {
     throw new ApiError(404, "Booking not found");
   }

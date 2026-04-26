@@ -1,7 +1,8 @@
-import { Booking } from "../models/booking.model";
-import { ApiError } from "../utils/ApiError";
-import { asyncHandler } from "../utils/asyncHandler";
-import { Review } from "../models/review.model";
+import { Booking } from "../models/booking.model.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { Review } from "../models/review.model.js";
 import mongoose, { isValidObjectId } from "mongoose";
 
 const createReview = asyncHandler(async (req, res) => {
@@ -69,7 +70,7 @@ const getItemsReviews = asyncHandler(async (req, res) => {
   const stats = await Review.aggregate([
     {
       $match: {
-        itemId: new mongoose.Schema.Types.ObjectId(itemId),
+        itemId: new mongoose.Types.ObjectId(itemId),
       },
     },
     {
@@ -103,4 +104,16 @@ const getItemsReviews = asyncHandler(async (req, res) => {
   );
 });
 
-export { createReview,getItemsReviews };
+const getRecentReviews = asyncHandler(async (req, res) => {
+  const reviews = await Review.find()
+    .sort({ createdAt: -1 })
+    .limit(6)
+    .populate("reviewerId", "fullname avatar department year")
+    .populate("itemId", "title category");
+
+  return res.status(200).json(
+    new ApiResponse(200, reviews, "Recent reviews fetched successfully")
+  );
+});
+
+export { createReview, getItemsReviews, getRecentReviews };

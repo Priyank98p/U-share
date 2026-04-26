@@ -1,9 +1,13 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
-import { uploadOnCloudinary } from "../utils/Cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/Cloudinary.js";
 import { Item } from "../models/item.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { isValidObjectId } from "mongoose";
+import NodeCache from "node-cache";
+
+// In-memory cache with 30-second TTL for item listings
+const itemCache = new NodeCache({ stdTTL: 30, checkperiod: 10 });
 
 const createListing = asyncHandler(async (req, res) => {
   const {
@@ -11,10 +15,12 @@ const createListing = asyncHandler(async (req, res) => {
     description,
     category,
     brand,
-    images,
     condition,
     rentalPricePerDay,
     depositAmount,
+    availableFrom,
+    availableTo,
+    pickupLocation,
   } = req.body;
 
   if (!title || !description || !category || !rentalPricePerDay) {
@@ -52,12 +58,18 @@ const createListing = asyncHandler(async (req, res) => {
     title: title.trim(),
     description: description.trim(),
     category,
-    brand: brand.trim() || "",
+    brand: brand ? brand.trim() : "",
     condition: condition || "Good",
     rentalPricePerDay: Number(rentalPricePerDay),
     depositAmount: depositAmount ? Number(depositAmount) : 0,
     images: uploadedImageUrls,
+    availableFrom: availableFrom ? new Date(availableFrom) : new Date(),
+    availableTo: availableTo ? new Date(availableTo) : undefined,
+    pickupLocation: pickupLocation ? pickupLocation.trim() : "",
   });
+
+  // Invalidate cache when a new item is added
+  itemCache.flushAll();
 
   return res
     .status(200)
@@ -65,13 +77,18 @@ const createListing = asyncHandler(async (req, res) => {
 });
 
 const getAllItems = asyncHandler(async (req, res) => {
-  const { category, search, minPrice, maxPrice, date } = req.query;
+  const { category, search, minPrice, maxPrice, date, condition, page: pageParam, limit: limitParam } = req.query;
+
+  // Build cache key from query params
+  const cacheKey = JSON.stringify({ category, search, minPrice, maxPrice, date, condition, pageParam, limitParam });
+  const cached = itemCache.get(cacheKey);
+  if (cached) {
+    return res.status(200).json(cached);
+  }
 
   let filter = { isActive: true };
 
-  if (category) {
-    filter.category = category;
-  }
+  if (category) filter.category = category;
 
   if (search) {
     filter.$or = [
@@ -86,6 +103,8 @@ const getAllItems = asyncHandler(async (req, res) => {
     if (maxPrice) filter.rentalPricePerDay.$lte = Number(maxPrice);
   }
 
+  if (condition) filter.condition = condition;
+
   if (date) {
     const requestedDate = new Date(date);
     filter.availableFrom = { $lte: requestedDate };
@@ -96,32 +115,35 @@ const getAllItems = asyncHandler(async (req, res) => {
     ];
   }
 
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+  const page = parseInt(pageParam) || 1;
+  const limit = parseInt(limitParam) || 12;
   const skip = (page - 1) * limit;
 
   const items = await Item.find(filter)
-    .sort({ createdAt: -1 }) // Show newest items first
+    .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
-    .populate("ownerId", "fullname email rating"); // Join with User data
+    .populate("ownerId", "fullname email rating department");
 
   const totalItems = await Item.countDocuments(filter);
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      {
-        items,
-        pagination: {
-          totalItems,
-          currentPage: page,
-          totalPages: Math.ceil(totalItems / limit),
-        },
+  const responseData = new ApiResponse(
+    200,
+    {
+      items,
+      pagination: {
+        totalItems,
+        currentPage: page,
+        totalPages: Math.ceil(totalItems / limit),
       },
-      "Items fetched successfully",
-    ),
+    },
+    "Items fetched successfully",
   );
+
+  // Store in cache
+  itemCache.set(cacheKey, responseData);
+
+  return res.status(200).json(responseData);
 });
 
 const getItemById = asyncHandler(async (req, res) => {
@@ -133,7 +155,7 @@ const getItemById = asyncHandler(async (req, res) => {
 
   const item = await Item.findById(id).populate(
     "ownerId",
-    "fullname email department year",
+    "fullname email department year avatar rating",
   );
 
   if (!item) {
@@ -203,9 +225,12 @@ const updateItem = asyncHandler(async (req, res) => {
     },
     {
       new: true,
-      runValidators: true, // Ensures the new data still obeys Mongoose schema rules
+      runValidators: true,
     },
   );
+
+  // Invalidate cache
+  itemCache.flushAll();
 
   return res
     .status(200)
@@ -228,17 +253,19 @@ const deleteItemListing = asyncHandler(async (req, res) => {
     throw new ApiError(403, "You are not authorized for deleting this listing");
   }
 
+  // Delete images from Cloudinary
+  if (item.images && item.images.length > 0) {
+    await Promise.allSettled(item.images.map((url) => deleteFromCloudinary(url)));
+  }
+
   await Item.findByIdAndUpdate(
     id,
-    {
-      $set: {
-        isActive: false,
-      },
-    },
-    {
-      new: true,
-    },
+    { $set: { isActive: false } },
+    { new: true },
   );
+
+  // Invalidate cache
+  itemCache.flushAll();
 
   return res
     .status(200)

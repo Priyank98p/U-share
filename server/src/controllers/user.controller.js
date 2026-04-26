@@ -1,7 +1,7 @@
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
-import { uploadOnCloudinary } from "../utils/Cloudinary.js";
+import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/Cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 
@@ -18,6 +18,7 @@ const generateRefreshTokenAndAccessToken = async (userId) => {
     throw new ApiError(500, "Something went wrong while generating the tokens");
   }
 };
+
 const registerUser = asyncHandler(async (req, res) => {
   const { username, email, password, fullname, department, year } = req.body;
 
@@ -64,7 +65,7 @@ const registerUser = asyncHandler(async (req, res) => {
     department,
     year,
     studentIdCard: studentIdCardCloudinary.url,
-    avatar:avatar.url
+    avatar: avatar.url
   });
 
   const userCreated = await User.findById(user._id).select(
@@ -86,7 +87,7 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const userLogin = asyncHandler(async (req, res) => {
-  const { email, username, password } = req.body;
+  const { email, username, password, isAdminLogin } = req.body;
 
   if (!username && !email) {
     throw new ApiError(400, "Username or email is required");
@@ -102,7 +103,11 @@ const userLogin = asyncHandler(async (req, res) => {
 
   const isPasswordCorrectOrNot = await user.isPasswordCorrect(password);
   if (!isPasswordCorrectOrNot) {
-    throw new ApiError(400, "Invalid credentials");
+    throw new ApiError(400, "Wrong credentials");
+  }
+
+  if (isAdminLogin && user.role !== "admin") {
+    throw new ApiError(403, "Access denied. You are not an admin.");
   }
 
   const { refreshToken, accessToken } =
@@ -196,26 +201,231 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 });
 
 const updateAvatar = asyncHandler(async (req, res) => {
-  const avatarLocalPath = req?.file.path;
+  const avatarLocalPath = req?.file?.path;
 
   if (!avatarLocalPath) throw new ApiError(400, "Avatar is required");
 
+  // Delete old avatar from Cloudinary before uploading new one
+  const currentUser = await User.findById(req.user._id);
+  if (currentUser?.avatar && currentUser.avatar.includes("cloudinary.com")) {
+    await deleteFromCloudinary(currentUser.avatar);
+  }
+
   const avatar = await uploadOnCloudinary(avatarLocalPath);
-  if (!avatar.url) throw ApiError(400, "Error while updating avatar");
+  if (!avatar?.url) throw new ApiError(400, "Error while updating avatar");
 
   const user = await User.findByIdAndUpdate(
     req?.user._id,
-    {
-      $set: {
-        avatar: avatar.url,
-      },
-    },
+    { $set: { avatar: avatar.url } },
     { new: true }
   ).select("-password");
 
   return res
     .status(200)
-    .json(new ApiResponse(201, user, "Avatar updated successfully"));
+    .json(new ApiResponse(200, user, "Avatar updated successfully"));
 });
 
-export { registerUser, userLogin, userLogout, refreshAccessToken, updateAvatar };
+const toggleWishlist = asyncHandler(async (req, res) => {
+  const { itemId } = req.params;
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  const isWished = user.wishlist.includes(itemId);
+  
+  if (isWished) {
+    user.wishlist = user.wishlist.filter((id) => id.toString() !== itemId);
+  } else {
+    user.wishlist.push(itemId);
+  }
+
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200, 
+      { isWished: !isWished, wishlist: user.wishlist }, 
+      isWished ? "Item removed from wishlist" : "Item added to wishlist"
+    )
+  );
+});
+
+const getWishlist = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).populate("wishlist");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, user.wishlist, "Wishlist fetched successfully")
+  );
+});
+
+const getCurrentUser = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select("-password -refreshToken");
+  if (!user) throw new ApiError(404, "User not found");
+  return res.status(200).json(new ApiResponse(200, user, "User fetched successfully"));
+});
+
+const updateProfile = asyncHandler(async (req, res) => {
+  const { fullname, department, year } = req.body;
+  
+  const updateFields = {};
+  if (fullname) updateFields.fullname = fullname.trim();
+  if (department) updateFields.department = department.trim();
+  if (year) updateFields.year = Number(year);
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { $set: updateFields },
+    { new: true, runValidators: true }
+  ).select("-password -refreshToken");
+
+  if (!user) throw new ApiError(404, "User not found");
+
+  return res.status(200).json(new ApiResponse(200, user, "Profile updated successfully"));
+});
+
+const updateStudentIdCard = asyncHandler(async (req, res) => {
+  const localPath = req?.file?.path;
+  if (!localPath) throw new ApiError(400, "Student ID card image is required");
+
+  // Delete old ID card from Cloudinary
+  const currentUser = await User.findById(req.user._id);
+  if (currentUser?.studentIdCard && currentUser.studentIdCard.includes("cloudinary.com")) {
+    await deleteFromCloudinary(currentUser.studentIdCard);
+  }
+
+  const uploaded = await uploadOnCloudinary(localPath);
+  if (!uploaded?.url) throw new ApiError(400, "Failed to upload student ID card");
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { $set: { studentIdCard: uploaded.url } },
+    { new: true }
+  ).select("-password -refreshToken");
+
+  return res.status(200).json(new ApiResponse(200, user, "Student ID card updated successfully"));
+});
+
+const getDashboardStats = asyncHandler(async (req, res) => {
+  const { default: mongoose } = await import("mongoose");
+  const Booking = mongoose.model("Booking");
+  const Item = mongoose.model("Item");
+
+  const userId = req.user._id;
+
+  const activeRentals = await Booking.countDocuments({
+    borrowerId: userId,
+    status: { $in: ["approved", "ongoing"] }
+  });
+
+  const earningsAgg = await Booking.aggregate([
+    { $match: { ownerId: userId, status: { $in: ["approved", "ongoing", "returned"] } } },
+    { $group: { _id: null, total: { $sum: "$totalPrice" } } }
+  ]);
+  const totalEarnings = earningsAgg.length > 0 ? earningsAgg[0].total : 0;
+
+  const pendingRequests = await Booking.countDocuments({
+    ownerId: userId,
+    status: "pending"
+  });
+
+  const user = await User.findById(userId).select("rating totalReviews");
+
+  const recentBookings = await Booking.find({
+    $or: [{ borrowerId: userId }, { ownerId: userId }]
+  })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .populate("itemId", "title images category")
+    .populate("borrowerId", "fullname avatar")
+    .populate("ownerId", "fullname avatar");
+
+  const myItems = await Item.find({ ownerId: userId, isActive: true })
+    .sort({ createdAt: -1 })
+    .limit(3);
+
+  return res.status(200).json(new ApiResponse(200, {
+    stats: {
+      activeRentals,
+      totalEarnings,
+      pendingRequests,
+      averageRating: user?.rating || 0,
+      totalReviews: user?.totalReviews || 0,
+    },
+    recentBookings,
+    topItems: myItems,
+  }, "Dashboard stats fetched successfully"));
+});
+
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) throw new ApiError(400, "Please provide an email address");
+
+  const user = await User.findOne({ email: email.toLowerCase() });
+  if (!user) {
+    throw new ApiError(404, "User doesn't exist");
+  }
+
+  const resetToken = user.getResetPasswordToken();
+  await user.save({ validateBeforeSave: false });
+
+  // In a real app, send an email. For now, we return it in the response for testing.
+  const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+  
+  return res.status(200).json(
+    new ApiResponse(200, { resetToken, resetUrl }, "Password reset link generated. (Check response or UI for the link)")
+  );
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const { token } = req.params;
+  const { password } = req.body;
+
+  if (!password || password.length < 8) {
+    throw new ApiError(400, "Password must be at least 8 characters long");
+  }
+
+  import("crypto").then(async (crypto) => {
+    const resetPasswordToken = crypto.default
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      throw new ApiError(400, "Invalid or expired password reset token");
+    }
+
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+
+    res.status(200).json(new ApiResponse(200, {}, "Password updated successfully"));
+  });
+});
+
+export {
+  registerUser,
+  userLogin,
+  userLogout,
+  refreshAccessToken,
+  updateAvatar,
+  toggleWishlist,
+  getWishlist,
+  getCurrentUser,
+  updateProfile,
+  updateStudentIdCard,
+  getDashboardStats,
+  forgotPassword,
+  resetPassword,
+};

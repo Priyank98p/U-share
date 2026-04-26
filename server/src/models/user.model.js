@@ -62,6 +62,19 @@ const userSchema = new Schema(
       type: Number,
       default: 0,
     },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+    wishlist: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Item",
+      },
+    ],
   },
   {
     timestamps: true,
@@ -103,6 +116,24 @@ userSchema.methods.generateRefreshToken = function () {
       expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
     },
   );
+};
+
+// Generate and hash password reset token
+import crypto from "crypto";
+userSchema.methods.getResetPasswordToken = function () {
+  // Generate token
+  const resetToken = crypto.randomBytes(20).toString("hex");
+
+  // Hash token and set to resetPasswordToken field
+  this.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+
+  // Set expire time to 10 minutes
+  this.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+
+  return resetToken;
 };
 
 export const User = mongoose.model("User", userSchema);

@@ -58,6 +58,10 @@ const itemSchema = new Schema(
     availableTo: {
       type: Date,
     },
+    pickupLocation: {
+      type: String,
+      default: "",
+    },
     isActive: {
       type: Boolean,
       default: true,
@@ -72,6 +76,6 @@ function arrayLimit(val) {
   return val.length <= 5;
 }
 
-itemSchema.index({ title: 'text', description: 'text' });
+itemSchema.index({ title: "text", description: "text" });
 
-export const Item = mongoose.model("Item", itemSchema)
+export const Item = mongoose.model("Item", itemSchema);
