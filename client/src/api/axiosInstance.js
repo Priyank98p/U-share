@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:3000/api/v1", // Note: backend is running on 3000 usually, but let's check index.js
-  withCredentials: true, 
+  baseURL: import.meta.env.VITE_BACKEND_URL || "",
+  withCredentials: true,
 });
 
 axiosInstance.interceptors.response.use(
