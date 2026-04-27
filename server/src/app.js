@@ -8,19 +8,12 @@ import rateLimit from "express-rate-limit";
 const app = express();
 const httpServer = createServer(app);
 
-const io = new Server(httpServer, {
-  cors: {
-    origin: "http://localhost:5173",
-    credentials: true,
-  },
-});
-
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  }),
-);
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true,
+};
+app.use(cors(corsOptions));
+const io = new Server(httpServer, { cors: corsOptions });
 
 // Rate Limiting — strict for auth, relaxed for general API
 const authLimiter = rateLimit({
