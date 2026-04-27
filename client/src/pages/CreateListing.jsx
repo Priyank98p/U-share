@@ -246,9 +246,6 @@ export default function CreateListing() {
                         <div className="w-16 h-16 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
                           <ImagePlus className="w-6 h-6" />
                         </div>
-                        <div className="w-16 h-16 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
-                          <ImagePlus className="w-6 h-6" />
-                        </div>
                       </div>
                     </label>
                   </div>
@@ -387,7 +384,7 @@ export default function CreateListing() {
                         </span>
                         <Input
                           type="number"
-                          step="0.01"
+                          step="1.00"
                           className="h-12 pl-8 rounded-xl bg-slate-50 border-slate-200 font-medium"
                           placeholder="0.00"
                           {...register("price")}
@@ -409,7 +406,7 @@ export default function CreateListing() {
                         </span>
                         <Input
                           type="number"
-                          step="0.01"
+                          step="1.00"
                           className="h-12 pl-8 rounded-xl bg-slate-50 border-slate-200 font-medium"
                           placeholder="0.00"
                           {...register("deposit")}
@@ -434,7 +431,7 @@ export default function CreateListing() {
                           7 Days Rental
                         </span>
                         <span className="font-bold text-indigo-50">
-                          ${estimatedWeeklyEarnings}
+                          ₹{estimatedWeeklyEarnings}
                         </span>
                       </div>
                       <div className="flex justify-between items-center py-3 border-b border-indigo-400/30 text-rose-300">

@@ -98,7 +98,7 @@ const Login = () => {
               <Input
                 id="email"
                 type="email"
-                placeholder="you@university.edu"
+                placeholder="Enter your email address"
                 className={`h-12 bg-slate-50/50 border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 transition-all ${errors.email ? "border-rose-500 focus-visible:ring-rose-500" : ""}`}
                 {...register("email")}
               />
