@@ -8,17 +8,12 @@ dotenv.config({
 });
 
 // Initialize database connection
-connectDB().catch((error) => {
-  console.log("Mongodb connection failed", error);
-});
-
-// For Vercel serverless, export the app
-export default app;
-
-// For local development, start the server
-if (process.env.NODE_ENV !== "production") {
-  initializeChatSocket(io);
-  httpServer.listen(process.env.PORT || 8000, () => {
-    console.log(`Server is running at port: ${process.env.PORT}`);
+connectDB()
+  .then(() => {
+    app.listen(process.env.PORT || 8000, () => {
+      console.log("Server is running at port:", process.env.PORT);
+    });
+  })
+  .catch((error) => {
+    console.log("Database Conection failed", error);
   });
-}
