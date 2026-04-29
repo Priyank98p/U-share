@@ -8,8 +8,11 @@ import rateLimit from "express-rate-limit";
 const app = express();
 const httpServer = createServer(app);
 
+const rawFrontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+const frontendUrl = rawFrontendUrl.endsWith('/') ? rawFrontendUrl.slice(0, -1) : rawFrontendUrl;
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  origin: [frontendUrl, "http://localhost:5173", "http://localhost:5174"],
   credentials: true,
 };
 app.use(cors(corsOptions));

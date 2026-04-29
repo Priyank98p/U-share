@@ -1,7 +1,12 @@
 import axios from "axios";
 
+const rawBaseUrl = import.meta.env.VITE_BACKEND_URL || "";
+const finalBaseUrl = rawBaseUrl.endsWith('/api/v1') 
+  ? rawBaseUrl 
+  : `${rawBaseUrl.endsWith('/') ? rawBaseUrl.slice(0, -1) : rawBaseUrl}/api/v1`;
+
 const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL || "",
+  baseURL: finalBaseUrl,
   withCredentials: true,
 });
 
