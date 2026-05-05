@@ -15,8 +15,8 @@ const Home = () => {
       try {
         const res = await axiosInstance.get("/reviews/recent");
         setReviews(res.data?.data || []);
-      } catch {
-        
+      } catch(error) {
+        console.lor(error)
       }
     };
     fetchReviews();

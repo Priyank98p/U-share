@@ -7,7 +7,6 @@ import { SlidersHorizontal, PackageSearch, X, Search } from "lucide-react";
 const CATEGORIES = ["Electronics", "Books", "Calculators", "Project Kits", "Sports", "Lab & Equipment"];
 const CONDITIONS = ["New", "Like New", "Good", "Fair"];
 
-// ✅ Declared OUTSIDE component — avoids "component during render" lint error
 function FilterPanel({ category, condition, minPrice, maxPrice, availabilityDate, activeFilterCount, onCategoryChange, onConditionChange, setMinPrice, setMaxPrice, setAvailabilityDate, resetFilters }) {
   return (
     <div className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-slate-200 shadow-sm space-y-8">

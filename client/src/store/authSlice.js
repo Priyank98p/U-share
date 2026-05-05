@@ -1,14 +1,12 @@
-// client/src/redux/authSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axiosInstance from "../api/axiosInstance";
 
-// 🚀 Async Thunk: Handles the API request for logging in
+// Async Thunk: Handles the API request for logging in
 export const loginUser = createAsyncThunk(
   "auth/login",
   async (credentials, thunkAPI) => {
     try {
       const response = await axiosInstance.post("/users/login", credentials);
-      // Assuming your backend returns { data: { user: {...} } }
       return response.data.data.user;
     } catch (error) {
       // Passes the backend error message to the UI
@@ -30,7 +28,6 @@ const authSlice = createSlice({
     error: null,
   },
   reducers: {
-    // We can use this later for the logout button
     logout: (state) => {
       state.user = null;
       state.isAuthenticated = false;

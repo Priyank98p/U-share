@@ -111,6 +111,10 @@ const userLogin = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Access denied. You are not an admin.");
   }
 
+  if (!isAdminLogin && user.role === "admin") {
+    throw new ApiError(403, "Please use the Admin Login portal.");
+  }
+
   const { refreshToken, accessToken } =
     await generateRefreshTokenAndAccessToken(user._id);
 

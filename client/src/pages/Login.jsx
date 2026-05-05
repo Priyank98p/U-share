@@ -57,11 +57,11 @@ const Login = () => {
           <div className="mx-auto w-16 h-16 bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-indigo-600/30">
             <ShieldCheck className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-3xl font-black text-indigo-500 font-heading tracking-tight">
-            Welcome back
+          <h2 className="text-3xl font-black text-indigo-500 font-heading tracking-tight transition-colors duration-300">
+            {isAdminLogin ? "Admin Login" : "User Login"}
           </h2>
-          <p className="mt-2 text-sm text-slate-500 font-medium">
-            Sign in to continue to U-Share
+          <p className="mt-2 text-sm text-slate-500 font-medium transition-colors duration-300">
+            {isAdminLogin ? "Sign in to access the admin dashboard" : "Sign in to continue to U-Share"}
           </p>
         </div>
 

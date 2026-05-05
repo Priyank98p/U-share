@@ -1,4 +1,3 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 const HeroSection = () => {
@@ -25,7 +24,7 @@ const HeroSection = () => {
             </Button>
             </Link>
             <Link to="/create-listing">
-            <Button className="bg-slate-100 cursor-pointer hover:scale-103 hover:bg-emerald-300 text-md text-gray-600 border px-6 py-6 rounded-3xl">
+            <Button className="bg-slate-200 cursor-pointer hover:scale-103 hover:bg-slate-900 text-md text-gray-600 hover:text-white border px-6 py-6 rounded-3xl transition-all ease-in hover:scale-105">
               List an item
             </Button>
             </Link>
