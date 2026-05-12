@@ -6,16 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import axiosInstance from "@/api/axiosInstance";
-import {
-  CloudUpload,
-  ImagePlus,
-  Sparkles,
-  ThumbsUp,
-  Edit3,
-  MapPin,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
+import { CloudUpload, ImagePlus, Sparkles, ThumbsUp, Edit3, MapPin, CheckCircle2, AlertCircle } from "lucide-react";
+import { useSelector } from "react-redux";
 
 // Add brand to the schema so Zod knows it exists
 const listingSchema = z.object({
@@ -31,6 +23,7 @@ const listingSchema = z.object({
 
 export default function CreateListing() {
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
   const [condition, setCondition] = useState("Good");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -187,6 +180,16 @@ export default function CreateListing() {
 
         {/* MAIN FORM CONTENT */}
         <div className="col-span-1 lg:col-span-9">
+          {!user?.isVerified && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-bold text-amber-800">Verification Required</h3>
+                <p className="text-sm font-medium text-amber-700">You must be verified by an admin before you can list items for rent.</p>
+              </div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             {apiError && (
               <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-3">
@@ -531,7 +534,7 @@ export default function CreateListing() {
                   </Button>
                   <Button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !user?.isVerified}
                     className="w-full sm:w-auto font-bold h-12 cursor-pointer rounded-xl px-10 bg-indigo-600 shadow-lg shadow-indigo-600/20 text-white text-md hover:bg-indigo-700 transition-colors"
                   >
                     {isSubmitting ? "Processing..." : "List Item Now"}

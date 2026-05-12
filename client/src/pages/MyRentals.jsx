@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { useToast } from "@/context/ToastContext";
 import {
-  CalendarDays, CreditCard, Clock, CheckCircle2, XCircle, ShoppingBag
+  CalendarDays, CreditCard, Clock, CheckCircle2, XCircle, ShoppingBag, Copy, Star
 } from "lucide-react";
 
 export default function MyRentals() {
@@ -38,12 +38,19 @@ export default function MyRentals() {
     fetchRentals();
   }, []);
 
-  const handleStatusUpdate = async (bookingId, status) => {
+  const handleStatusUpdate = async (bookingId, status, isRenting = false) => {
     try {
       await axiosInstance.patch(`/bookings/status/${bookingId}`, { status });
-      setRequests(prev => prev.map(req => 
-        req._id === bookingId ? { ...req, status } : req
-      ));
+      if (isRenting) {
+        setRentals(prev => prev.map(req => 
+          req._id === bookingId ? { ...req, status } : req
+        ));
+      } else {
+        setRequests(prev => prev.map(req => 
+          req._id === bookingId ? { ...req, status } : req
+        ));
+      }
+      toast.success(`Booking marked as ${status.replace("_", " ")}`);
     } catch (err) {
       console.error("Update failed", err);
       toast.error(err.response?.data?.message || "Failed to update status");
@@ -57,6 +64,7 @@ export default function MyRentals() {
       rejected: "bg-rose-50 text-rose-600 border-rose-200",
       returned: "bg-slate-100 text-slate-600 border-slate-300",
       ongoing: "bg-blue-50 text-blue-600 border-blue-200",
+      return_requested: "bg-purple-50 text-purple-600 border-purple-200",
       cancelled: "bg-slate-100 text-slate-500 border-slate-200",
     };
     const labels = {
@@ -65,6 +73,7 @@ export default function MyRentals() {
       rejected: "Rejected",
       returned: "Returned",
       ongoing: "Ongoing",
+      return_requested: "Return Requested",
       cancelled: "Cancelled",
     };
     if (!styles[status]) return null;
@@ -129,6 +138,15 @@ export default function MyRentals() {
                       <div>
                         <h3 className="font-heading text-xl font-bold text-slate-900 tracking-tight">{rental.itemId?.title || 'Unknown Item'}</h3>
                         <p className="text-sm font-medium text-slate-500">Owner: {rental.ownerId?.fullname || 'Unknown'}</p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase flex items-center gap-1">
+                          Ref: {rental._id}
+                          <button 
+                            onClick={() => { navigator.clipboard.writeText(rental._id); toast.success("Copied!"); }}
+                            className="hover:text-indigo-500 transition-colors cursor-pointer"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </p>
                       </div>
                       {renderStatusBadge(rental.status)}
                     </div>
@@ -142,6 +160,28 @@ export default function MyRentals() {
                         <span>₹{rental.totalPrice}</span>
                       </div>
                     </div>
+                    {['approved', 'ongoing'].includes(rental.status) && (
+                      <div className="flex gap-3 pt-2">
+                        <Button 
+                          onClick={() => handleStatusUpdate(rental._id, 'return_requested', true)} 
+                          variant="outline"
+                          className="border-purple-200 text-purple-600 hover:bg-purple-50 rounded-xl font-bold px-6 transition-colors cursor-pointer"
+                        >
+                          Initiate Return
+                        </Button>
+                      </div>
+                    )}
+                    {rental.status === 'returned' && (
+                      <div className="flex gap-3 pt-2">
+                        <Link to={`/item/${rental.itemId?._id}?review=${rental._id}`}>
+                          <Button 
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-600/20 font-bold px-6 transition-colors cursor-pointer"
+                          >
+                            <Star className="w-4 h-4 mr-2" /> Write Review
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -178,6 +218,15 @@ export default function MyRentals() {
                       <div>
                         <h3 className="font-heading text-xl font-bold text-slate-900 tracking-tight">{request.itemId?.title || 'Unknown Item'}</h3>
                         <p className="text-sm font-medium text-slate-500">Requested by: {request.borrowerId?.fullname || 'Unknown'}</p>
+                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase flex items-center gap-1">
+                          Ref: {request._id}
+                          <button 
+                            onClick={() => { navigator.clipboard.writeText(request._id); toast.success("Copied!"); }}
+                            className="hover:text-indigo-500 transition-colors cursor-pointer"
+                          >
+                            <Copy className="w-3 h-3" />
+                          </button>
+                        </p>
                       </div>
                       {renderStatusBadge(request.status)}
                     </div>
@@ -195,18 +244,39 @@ export default function MyRentals() {
                     {request.status === 'pending' && (
                       <div className="flex gap-3 pt-2">
                         <Button 
-                          onClick={() => handleStatusUpdate(request._id, 'approved')} 
+                          onClick={() => handleStatusUpdate(request._id, 'approved', false)} 
                           className="bg-emerald-500 hover:bg-emerald-600 rounded-xl shadow-lg shadow-emerald-500/20 font-bold px-6 transition-colors"
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" /> Approve
                         </Button>
                         <Button 
-                          onClick={() => handleStatusUpdate(request._id, 'rejected')} 
+                          onClick={() => handleStatusUpdate(request._id, 'rejected', false)} 
                           variant="outline" 
                           className="rounded-xl font-bold px-6 border-rose-200 text-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
                         >
                           <XCircle className="w-4 h-4 mr-2" /> Decline
                         </Button>
+                      </div>
+                    )}
+                    {request.status === 'return_requested' && (
+                      <div className="flex gap-3 pt-2">
+                        <Button 
+                          onClick={() => handleStatusUpdate(request._id, 'returned', false)} 
+                          className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-lg shadow-purple-600/20 font-bold px-6 transition-colors cursor-pointer"
+                        >
+                          Accept Return
+                        </Button>
+                      </div>
+                    )}
+                    {request.status === 'returned' && (
+                      <div className="flex gap-3 pt-2">
+                        <Link to={`/item/${request.itemId?._id}?review=${request._id}`}>
+                          <Button 
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-lg shadow-indigo-600/20 font-bold px-6 transition-colors cursor-pointer"
+                          >
+                            <Star className="w-4 h-4 mr-2" /> Write Review
+                          </Button>
+                        </Link>
                       </div>
                     )}
                   </div>

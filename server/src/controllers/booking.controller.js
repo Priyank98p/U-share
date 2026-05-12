@@ -8,6 +8,10 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const createBooking = asyncHandler(async (req, res) => {
   const { itemId, startDate, endDate } = req.body;
 
+  if (!req.user?.isVerified) {
+    throw new ApiError(403, "You must be verified by an admin to borrow items.");
+  }
+
   if (!itemId || !startDate || !endDate) {
     throw new ApiError(400, "Item id and rental dates are required");
   }
@@ -70,7 +74,7 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
   const { bookingId } = req.params;
   const { status } = req.body;
 
-  if (!["approved", "rejected"].includes(status)) {
+  if (!["approved", "rejected", "ongoing", "return_requested", "returned", "cancelled"].includes(status)) {
     throw new ApiError(400, "Invalid status update");
   }
 
@@ -79,7 +83,9 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Booking not found");
   }
 
-  if (booking.ownerId.toString() !== req.user._id.toString()) {
+  if (status === "return_requested" && booking.borrowerId.toString() !== req.user._id.toString()) {
+    throw new ApiError(401, "Only borrower can request a return");
+  } else if (status !== "return_requested" && status !== "cancelled" && booking.ownerId.toString() !== req.user._id.toString()) {
     throw new ApiError(401, "You are not authorized manage this booking");
   }
 
@@ -88,7 +94,7 @@ const updateBookingStatus = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, booking, `Booking status has been ${status}`));
+    .json(new ApiResponse(200, booking, `Booking status has been updated to ${status}`));
 });
 
 const getUserBookings = asyncHandler(async (req, res) => {

@@ -19,6 +19,10 @@ const verifyJWT = asyncHandler(async(req,res,next) =>{
         if(!user){
             throw new ApiError(400, "Invalid token")
         }
+        
+        if (user.isBlocked) {
+            throw new ApiError(403, "Your account has been blocked by the admin.");
+        }
     
         req.user = user
     

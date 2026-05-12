@@ -18,8 +18,8 @@ const createReview = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Booking not found");
   }
 
-  if (booking.status !== "completed") {
-    throw new ApiError(400, "You can only review completed rentals");
+  if (booking.status !== "returned") {
+    throw new ApiError(400, "You can only review returned rentals");
   }
 
   const currentUserId = req.user._id.toString();

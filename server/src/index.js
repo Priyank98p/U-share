@@ -10,10 +10,16 @@ dotenv.config({
 // Initialize database connection
 connectDB()
   .then(() => {
-    app.listen(process.env.PORT || 8000, () => {
+    // Initialize socket.io connection handlers
+    initializeChatSocket();
+    
+    // Use httpServer instead of app.listen to bind both Express and Socket.io to the same port
+    httpServer.listen(process.env.PORT || 8000, () => {
       console.log("Server is running at port:", process.env.PORT);
     });
   })
   .catch((error) => {
     console.log("Database Conection failed", error);
   });
+
+

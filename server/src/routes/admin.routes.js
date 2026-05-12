@@ -4,7 +4,9 @@ import {
   getPendingVerifications, 
   verifyUser, 
   getModerationFeed, 
-  toggleItemStatus 
+  toggleItemStatus,
+  rejectUser,
+  blockUser
 } from "../controllers/admin.controller.js";
 import { verifyJWT } from "../middleware/auth.middleware.js";
 import { isAdmin } from "../middleware/admin.middleware.js";
@@ -17,6 +19,8 @@ router.use(verifyJWT, isAdmin);
 router.get("/stats", getAdminStats);
 router.get("/pending-verifications", getPendingVerifications);
 router.patch("/verify-user/:userId", verifyUser);
+router.patch("/reject-user/:userId", rejectUser);
+router.patch("/block-user/:userId", blockUser);
 router.get("/moderation-feed", getModerationFeed);
 router.patch("/toggle-item/:itemId", toggleItemStatus);
 

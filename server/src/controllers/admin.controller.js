@@ -26,7 +26,7 @@ const getAdminStats = asyncHandler(async (req, res) => {
 });
 
 const getPendingVerifications = asyncHandler(async (req, res) => {
-  const users = await User.find({ isVerified: false, role: "user" }).select("-password -refreshToken");
+  const users = await User.find({ isVerified: false, verificationRejected: false, role: "user" }).select("-password -refreshToken");
   return res.status(200).json(
     new ApiResponse(200, users, "Pending verifications fetched successfully")
   );
@@ -50,7 +50,7 @@ const verifyUser = asyncHandler(async (req, res) => {
 
 const getModerationFeed = asyncHandler(async (req, res) => {
   // For now, just return all active items as a feed, or those with many views/reports if we had them.
-  const items = await Item.find().populate("ownerId", "fullname email").sort("-createdAt");
+  const items = await Item.find().populate("ownerId", "fullname email isBlocked").sort("-createdAt");
   return res.status(200).json(
     new ApiResponse(200, items, "Moderation feed fetched successfully")
   );
@@ -72,10 +72,37 @@ const toggleItemStatus = asyncHandler(async (req, res) => {
   );
 });
 
+const rejectUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const user = await User.findById(userId);
+
+  if (!user) throw new ApiError(404, "User not found");
+
+  user.verificationRejected = true;
+  user.isVerified = false;
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(200).json(new ApiResponse(200, user, "User verification rejected"));
+});
+
+const blockUser = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+  const user = await User.findById(userId);
+
+  if (!user) throw new ApiError(404, "User not found");
+
+  user.isBlocked = !user.isBlocked;
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(200).json(new ApiResponse(200, user, `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`));
+});
+
 export {
   getAdminStats,
   getPendingVerifications,
   verifyUser,
   getModerationFeed,
-  toggleItemStatus
+  toggleItemStatus,
+  rejectUser,
+  blockUser
 };

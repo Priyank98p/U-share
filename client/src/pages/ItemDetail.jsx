@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/button";
 import axiosInstance from "@/api/axiosInstance";
@@ -15,6 +15,7 @@ import {
   CreditCard,
   Banknote,
   Smartphone,
+  Star
 } from "lucide-react";
 
 export default function ItemDetail() {
@@ -34,6 +35,22 @@ export default function ItemDetail() {
   const [isBooking, setIsBooking] = useState(false);
   const [bookingSuccess, setBookingSuccess] = useState("");
 
+  const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState({ averageRating: 0, totalReviews: 0 });
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "", bookingId: "" });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const reviewBookingId = searchParams.get("review");
+    if (reviewBookingId) {
+      setShowReviewModal(true);
+      setReviewForm(prev => ({ ...prev, bookingId: reviewBookingId }));
+      setSearchParams({}); // Clean up URL
+    }
+  }, [searchParams, setSearchParams]);
+
   useEffect(() => {
     const fetchItem = async () => {
       try {
@@ -43,6 +60,15 @@ export default function ItemDetail() {
           response.data?.data?.item || response.data?.data || response.data;
         setItem(fetchedItem);
         setActiveImage(fetchedItem.images?.[0] || null);
+
+        // Fetch reviews
+        try {
+          const reviewRes = await axiosInstance.get(`/reviews/item/${id}`);
+          setReviews(reviewRes.data?.data?.reviews || []);
+          setReviewStats(reviewRes.data?.data?.stats || { averageRating: 0, totalReviews: 0 });
+        } catch (err) {
+          console.error("Failed to fetch reviews:", err);
+        }
       } catch (err) {
         console.error("Failed to fetch item:", err);
         setError("Could not load item details. It may have been removed.");
@@ -195,6 +221,34 @@ export default function ItemDetail() {
     }
   };
 
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!reviewForm.bookingId) {
+      toast.error("Please provide your Booking ID");
+      return;
+    }
+    setIsSubmittingReview(true);
+    try {
+      const res = await axiosInstance.post("/reviews/create", {
+        bookingId: reviewForm.bookingId,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment
+      });
+      toast.success(res.data.message || "Review submitted successfully!");
+      setShowReviewModal(false);
+      setReviewForm({ rating: 5, comment: "", bookingId: "" });
+      
+      // Refresh reviews
+      const reviewRes = await axiosInstance.get(`/reviews/item/${id}`);
+      setReviews(reviewRes.data?.data?.reviews || []);
+      setReviewStats(reviewRes.data?.data?.stats || { averageRating: 0, totalReviews: 0 });
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Failed to submit review");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen pt-24 flex flex-col items-center justify-center">
@@ -314,6 +368,56 @@ export default function ItemDetail() {
               </div>
             </div>
           </section>
+
+          {/* Reviews Section */}
+          <section className="mt-12">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-heading text-2xl font-bold text-slate-900">
+                Reviews ({reviewStats.totalReviews})
+              </h2>
+              {!isOwner && user && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowReviewModal(true)}
+                  className="rounded-xl font-bold"
+                >
+                  Write a Review
+                </Button>
+              )}
+            </div>
+
+            {reviews.length === 0 ? (
+              <div className="p-8 bg-slate-50 rounded-3xl border border-slate-200 text-center">
+                <p className="text-slate-500 font-medium">No reviews yet for this item.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((review) => (
+                  <div key={review._id} className="p-6 bg-white rounded-3xl shadow-sm border border-slate-200">
+                    <div className="flex justify-between items-start mb-4">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={review.reviewerId?.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${review.reviewerId?.fullname}`} 
+                          alt="Reviewer" 
+                          className="w-10 h-10 rounded-full border border-slate-200"
+                        />
+                        <div>
+                          <p className="font-bold text-slate-900 text-sm">{review.reviewerId?.fullname}</p>
+                          <p className="text-xs text-slate-500 font-medium">{new Date(review.createdAt).toLocaleDateString()}</p>
+                        </div>
+                      </div>
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-slate-600 font-medium text-sm leading-relaxed">{review.comment}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
 
         {/* Right Sidebar */}
@@ -332,7 +436,7 @@ export default function ItemDetail() {
               <h1 className="font-heading text-3xl font-extrabold text-slate-900 leading-tight">
                 {item.title}
               </h1>
-              <div className="flex items-center space-x-4 pt-2">
+              <div className="flex items-center justify-between pt-2">
                 <div className="flex items-center space-x-3">
                   <img
                     src={`https://api.dicebear.com/7.x/initials/svg?seed=${item.ownerId?.fullname || "User"}`}
@@ -350,6 +454,10 @@ export default function ItemDetail() {
                       Verified Student
                     </p>
                   </div>
+                </div>
+                <div className="flex items-center gap-1 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
+                  <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                  <span className="font-bold text-amber-700 text-sm">{reviewStats.averageRating || "New"}</span>
                 </div>
               </div>
             </div>
@@ -475,11 +583,20 @@ export default function ItemDetail() {
               {/* Actions */}
               {!isOwner ? (
                 <div className="flex flex-col gap-3">
+                  {!user?.isVerified && user && (
+                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="text-xs font-bold text-amber-800">Verification Required</h3>
+                        <p className="text-[10px] font-medium text-amber-700">You must be verified by an admin to book items or chat.</p>
+                      </div>
+                    </div>
+                  )}
                   <Button
                     size="lg"
                     onClick={handleBooking}
                     disabled={
-                      isBooking || !startDate || !endDate || diffDays <= 0
+                      isBooking || !startDate || !endDate || diffDays <= 0 || (user && !user.isVerified)
                     }
                     className="w-full h-14 rounded-2xl font-bold bg-indigo-600 text-white cursor-pointer text-lg shadow-lg shadow-indigo-500/30 disabled:opacity-50 transition-all active:scale-[0.98]"
                   >
@@ -491,11 +608,12 @@ export default function ItemDetail() {
                   </Button>
                   <Link
                     to={`/messages?user=${item.ownerId?._id}`}
-                    className="w-full"
+                    className={`w-full ${(user && !user.isVerified) ? 'pointer-events-none opacity-50' : ''}`}
                   >
                     <Button
                       variant="outline"
                       size="lg"
+                      disabled={user && !user.isVerified}
                       className="w-full h-14 rounded-2xl font-bold border-2 cursor-pointer"
                     >
                       <MessageSquare className="w-5 h-5 mr-2" /> Chat Owner
@@ -536,6 +654,72 @@ export default function ItemDetail() {
           </div>
         </div>
       </div>
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-slate-900/40">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <h2 className="font-heading text-2xl font-bold text-slate-900 mb-6">Write a Review</h2>
+            <form onSubmit={handleReviewSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-900 mb-2">Booking ID</label>
+                <input 
+                  type="text" 
+                  value={reviewForm.bookingId}
+                  onChange={(e) => setReviewForm(prev => ({ ...prev, bookingId: e.target.value }))}
+                  className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-sm font-medium focus:ring-2 focus:ring-indigo-100 outline-none"
+                  placeholder="Paste your booking ID"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">You can find this in your Rentals page.</p>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-900 mb-2">Rating</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewForm(prev => ({ ...prev, rating: star }))}
+                      className="focus:outline-none"
+                    >
+                      <Star className={`w-8 h-8 ${star <= reviewForm.rating ? 'fill-amber-400 text-amber-400' : 'text-slate-200 hover:text-amber-200'}`} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-900 mb-2">Comment</label>
+                <textarea 
+                  rows="4"
+                  value={reviewForm.comment}
+                  onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                  className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-100 outline-none resize-none"
+                  placeholder="Share your experience..."
+                  required
+                ></textarea>
+              </div>
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="flex-1 rounded-xl font-bold"
+                  onClick={() => setShowReviewModal(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={isSubmittingReview}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-600/20"
+                >
+                  {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
