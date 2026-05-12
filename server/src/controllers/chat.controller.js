@@ -3,6 +3,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import mongoose from "mongoose";
+import { io } from "../app.js";
 
 /**
  * Get chat history between the logged-in user and a recipient.
@@ -18,11 +19,18 @@ const getChatHistory = asyncHandler(async (req, res) => {
     throw new ApiError(400, "You cannot chat with yourself");
   }
 
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  const recipientObjectId = new mongoose.Types.ObjectId(recipientId);
+
   // Auto-mark messages from recipient as seen
-  await Chat.updateMany(
-    { senderId: recipientId, receiverId: userId, seen: false },
+  const updateResult = await Chat.updateMany(
+    { senderId: recipientObjectId, receiverId: userObjectId, seen: false },
     { $set: { seen: true } }
   );
+
+  if (updateResult.modifiedCount > 0) {
+    io.emit(`unread_update_${userObjectId.toString()}`);
+  }
 
   const messages = await Chat.find({
     $or: [
@@ -43,7 +51,7 @@ const getChatHistory = asyncHandler(async (req, res) => {
  * Get all conversations for the current user with last message and unread count.
  */
 const getConversations = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const userId = new mongoose.Types.ObjectId(req.user._id);
 
   const conversations = await Chat.aggregate([
     {
@@ -102,7 +110,7 @@ const getConversations = asyncHandler(async (req, res) => {
  * Get total unread message count (unique sender count) for the Navbar badge.
  */
 const getUnreadCount = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const userId = new mongoose.Types.ObjectId(req.user._id);
 
   const result = await Chat.aggregate([
     { $match: { receiverId: userId, seen: false } },

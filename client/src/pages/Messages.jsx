@@ -19,7 +19,7 @@ export default function Messages() {
   const [messages, setMessages] = useState([]);
   const [inputMsg, setInputMsg] = useState("");
   const roomRef = useRef("");
-  const bottomRef = useRef(null);
+  const chatContainerRef = useRef(null);
 
   // Derive recipientInfo from conversations list (no setState needed)
   const recipientInfo = useMemo(() => {
@@ -82,7 +82,12 @@ export default function Messages() {
   }, [user?._id, recipientId, conversations]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    }
   }, [messages]);
 
   const sendMessage = (e) => {
@@ -93,6 +98,7 @@ export default function Messages() {
         senderId: user._id,
         receiverId: recipientId,
         message: inputMsg,
+        createdAt: new Date().toISOString(),
       };
       socketRef.current.emit("send_message", messageData);
       setMessages((prev) => [...prev, messageData]);
@@ -182,7 +188,7 @@ export default function Messages() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-slate-50 to-white space-y-3">
+              <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-slate-50 to-white space-y-3">
               {messages.length === 0 && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <MessageCircle className="w-12 h-12 text-slate-200 mb-3" />
@@ -209,7 +215,6 @@ export default function Messages() {
                   </div>
                 );
               })}
-              <div ref={bottomRef} />
             </div>
 
             {/* Input */}

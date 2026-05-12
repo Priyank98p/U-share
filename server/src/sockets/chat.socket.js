@@ -24,8 +24,8 @@ export const initializeChatSocket = () => {
           seen: false,
         });
 
-        // Emit to all in room (including sender for confirmation)
-        io.to(room).emit("receive_message", {
+        // Emit to all in room except sender (since sender adds it locally)
+        socket.to(room).emit("receive_message", {
           ...data,
           _id: savedMsg._id,
           createdAt: savedMsg.createdAt,
@@ -37,7 +37,7 @@ export const initializeChatSocket = () => {
       } catch (error) {
         console.error("Failed to save message:", error);
         // Still emit so the UI doesn't hang
-        io.to(room).emit("receive_message", data);
+        socket.to(room).emit("receive_message", data);
       }
     });
 

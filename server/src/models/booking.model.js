@@ -42,6 +42,7 @@ const bookingSchema = new Schema(
         "approved",
         "rejected",
         "ongoing",
+        "return_requested",
         "returned",
         "cancelled",
       ],

@@ -52,6 +52,14 @@ const userSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    verificationRejected: {
+      type: Boolean,
+      default: false,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
     rating: {
       type: Number,
     },

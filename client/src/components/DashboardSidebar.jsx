@@ -29,10 +29,17 @@ export default function DashboardSidebar() {
           />
         </div>
         <h2 className="font-heading text-lg font-bold text-slate-900">{user?.fullname || "Student"}</h2>
-        <div className="flex items-center gap-1 mt-1">
-          <ShieldCheck className="w-4 h-4 text-emerald-500" />
-          <span className="text-xs font-bold text-slate-500">Verified Student</span>
-        </div>
+        {user?.isVerified ? (
+          <div className="flex items-center gap-1 mt-1">
+            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+            <span className="text-xs font-bold text-slate-500">Verified Student</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1 mt-1 px-2 py-0.5 bg-amber-50 rounded-md">
+            <ShieldCheck className="w-4 h-4 text-amber-500 opacity-50" />
+            <span className="text-xs font-bold text-amber-600">Pending Verification</span>
+          </div>
+        )}
       </div>
 
       <nav className="flex-1 space-y-2">

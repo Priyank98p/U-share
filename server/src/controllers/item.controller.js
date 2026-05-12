@@ -23,6 +23,10 @@ const createListing = asyncHandler(async (req, res) => {
     pickupLocation,
   } = req.body;
 
+  if (!req.user?.isVerified) {
+    throw new ApiError(403, "You must be verified by an admin to create a listing.");
+  }
+
   if (!title || !description || !category || !rentalPricePerDay) {
     throw new ApiError(
       400,

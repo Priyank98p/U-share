@@ -4,6 +4,8 @@ import cookieParser from "cookie-parser";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import compression from "compression";
 
 const app = express();
 const httpServer = createServer(app);
@@ -17,6 +19,10 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 const io = new Server(httpServer, { cors: corsOptions });
+
+// Security & Performance Middlewares
+app.use(helmet());
+app.use(compression());
 
 // Rate Limiting — strict for auth, relaxed for general API
 const authLimiter = rateLimit({

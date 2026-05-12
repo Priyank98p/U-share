@@ -76,6 +76,35 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleRejectUser = async (userId, name) => {
+    try {
+      await axiosInstance.patch(`/admin/reject-user/${userId}`);
+      toast.success(`${name}'s verification was rejected.`);
+      setPendingUsers((prev) => prev.filter((u) => u._id !== userId));
+    } catch (error) {
+      console.log(error)
+      toast.error("Failed to reject user");
+    }
+  };
+
+  const handleBlockUser = async (userId, name) => {
+    try {
+      const res = await axiosInstance.patch(`/admin/block-user/${userId}`);
+      toast.success(`User ${name} is now ${res.data.data.isBlocked ? 'blocked' : 'unblocked'}.`);
+      setModerationFeed((prev) =>
+        prev.map((item) => {
+          if (item.ownerId._id === userId) {
+            return { ...item, ownerId: { ...item.ownerId, isBlocked: res.data.data.isBlocked } };
+          }
+          return item;
+        })
+      );
+    } catch (error) {
+      console.log(error)
+      toast.error("Failed to update user block status");
+    }
+  };
+
   const handleToggleItem = async (itemId, title) => {
     try {
       const res = await axiosInstance.patch(`/admin/toggle-item/${itemId}`);
@@ -317,7 +346,7 @@ export default function AdminDashboard() {
                               </td>
                               <td className="px-6 py-4">
                                 <a
-                                  href={u.avatar}
+                                  href={u.studentIdCard}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="w-16 h-10 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center hover:bg-slate-200 transition-colors"
@@ -325,12 +354,18 @@ export default function AdminDashboard() {
                                   <Eye className="w-4 h-4 text-slate-400" />
                                 </a>
                               </td>
-                              <td className="px-6 py-4 text-right">
+                              <td className="px-6 py-4 text-right space-x-2 flex justify-end">
                                 <Button
                                   size="sm"
-                                  onClick={() =>
-                                    handleApproveUser(u._id, u.fullname)
-                                  }
+                                  variant="outline"
+                                  onClick={() => handleRejectUser(u._id, u.fullname)}
+                                  className="border-rose-200 text-rose-600 hover:bg-rose-50 rounded-lg px-4"
+                                >
+                                  Reject
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleApproveUser(u._id, u.fullname)}
                                   className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg px-4"
                                 >
                                   Approve
@@ -382,9 +417,7 @@ export default function AdminDashboard() {
                             <Button
                               size="sm"
                               variant={item.isActive ? "outline" : "default"}
-                              onClick={() =>
-                                handleToggleItem(item._id, item.title)
-                              }
+                              onClick={() => handleToggleItem(item._id, item.title)}
                               className={`rounded-xl flex-1 text-xs font-bold ${item.isActive ? "border-rose-200 text-rose-600 hover:bg-rose-50" : "bg-emerald-500 text-white"}`}
                             >
                               {item.isActive ? (
@@ -397,6 +430,15 @@ export default function AdminDashboard() {
                                   Activate
                                 </>
                               )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleBlockUser(item.ownerId._id, item.ownerId.fullname)}
+                              className={`rounded-xl text-xs font-bold px-3 ${item.ownerId.isBlocked ? "border-emerald-200 text-emerald-600 hover:bg-emerald-50" : "border-rose-200 text-rose-600 hover:bg-rose-50"}`}
+                              title="Block or Unblock User"
+                            >
+                              {item.ownerId.isBlocked ? "Unblock User" : "Block User"}
                             </Button>
                           </div>
                         </div>
