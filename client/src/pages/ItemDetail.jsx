@@ -15,7 +15,9 @@ import {
   CreditCard,
   Banknote,
   Smartphone,
-  Star
+  Star,
+  MapPin,
+  Package
 } from "lucide-react";
 
 export default function ItemDetail() {
@@ -458,6 +460,39 @@ export default function ItemDetail() {
                 <div className="flex items-center gap-1 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
                   <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                   <span className="font-bold text-amber-700 text-sm">{reviewStats.averageRating || "New"}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Pickup Location & Availability Info */}
+            <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-3">
+              {item.pickupLocation && (
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Pickup Location</p>
+                    <p className="text-sm font-bold text-slate-800">{item.pickupLocation}</p>
+                  </div>
+                </div>
+              )}
+              {(item.availableFrom || item.availableTo) && (
+                <div className="flex items-start gap-3">
+                  <CalendarDays className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Availability</p>
+                    <p className="text-sm font-bold text-slate-800">
+                      {item.availableFrom ? new Date(item.availableFrom).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Now"}
+                      {" → "}
+                      {item.availableTo ? new Date(item.availableTo).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Open-ended"}
+                    </p>
+                  </div>
+                </div>
+              )}
+              <div className="flex items-start gap-3">
+                <Package className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">Condition</p>
+                  <p className="text-sm font-bold text-slate-800">{item.condition}</p>
                 </div>
               </div>
             </div>

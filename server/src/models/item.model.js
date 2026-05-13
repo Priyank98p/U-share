@@ -41,7 +41,7 @@ const itemSchema = new Schema(
     },
     condition: {
       type: String,
-      enum: ["New", "Like New", "Good", "Fair"],
+      enum: ["New", "Good", "Fair"],
       default: "Good",
     },
     rentalPricePerDay: {
