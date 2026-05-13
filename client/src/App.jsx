@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -22,6 +23,31 @@ import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
+  const { user } = useSelector((state) => state.auth);
+  const isAdmin = user?.role === "admin";
+
+  if (isAdmin) {
+    return (
+      <BrowserRouter>
+        <main className="min-h-screen flex flex-col bg-slate-50">
+          <div className="grow">
+            <Routes>
+              <Route
+                path="/admin"
+                element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="*" element={<Navigate to="/admin" replace />} />
+            </Routes>
+          </div>
+        </main>
+      </BrowserRouter>
+    );
+  }
+
   return (
     <BrowserRouter>
       <Navbar />

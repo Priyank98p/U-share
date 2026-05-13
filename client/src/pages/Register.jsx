@@ -105,7 +105,7 @@ const Register = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-700 font-bold">Campus Email</Label>
+              <Label htmlFor="email" className="text-slate-700 font-bold">Email</Label>
               <Input id="email" type="email" placeholder="Enter your email" className={`h-12 bg-slate-50 border-slate-200 ${errors.email ? "border-rose-500" : ""}`} {...register("email")} />
               {errors.email && <p className="text-sm text-rose-500 font-bold">{errors.email.message}</p>}
             </div>
@@ -130,7 +130,6 @@ const Register = () => {
                 <option value="2">2nd Year</option>
                 <option value="3">3rd Year</option>
                 <option value="4">4th Year</option>
-                <option value="5">5th Year</option>
               </select>
               {errors.year && <p className="text-sm text-rose-500 font-bold">{errors.year.message}</p>}
             </div>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { useToast } from "@/context/ToastContext";
 import {
-  Package, PlusCircle, Eye, Repeat, Edit, Trash2, Check, X
+  Package, PlusCircle, Eye, Repeat, Edit, Trash2, Check, X, Loader2
 } from "lucide-react";
 
 export default function MyListings() {
@@ -15,6 +15,10 @@ export default function MyListings() {
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const toast = useToast();
+
+  const [editingItem, setEditingItem] = useState(null);
+  const [editForm, setEditForm] = useState({ title: "", description: "", rentalPricePerDay: "", condition: "" });
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
   useEffect(() => {
     const fetchMyInventory = async () => {
@@ -56,6 +60,42 @@ export default function MyListings() {
     setToastMessage("Visibility updated.");
     setShowToast(true);
     setTimeout(() => setShowToast(false), 3000);
+  };
+
+  const openEditModal = (item) => {
+    setEditingItem(item._id);
+    setEditForm({
+      title: item.title || "",
+      description: item.description || "",
+      rentalPricePerDay: item.rentalPricePerDay || "",
+      condition: item.condition || "Good"
+    });
+  };
+
+  const closeEditModal = () => {
+    setEditingItem(null);
+    setEditForm({ title: "", description: "", rentalPricePerDay: "", condition: "" });
+  };
+
+  const submitEditListing = async (e) => {
+    e.preventDefault();
+    if (!editingItem) return;
+    
+    try {
+      setIsSubmittingEdit(true);
+      const res = await axiosInstance.patch(`/items/${editingItem}`, editForm);
+      const updatedItem = res.data.data;
+      setListings(listings.map(item => item._id === editingItem ? updatedItem : item));
+      setToastMessage("Listing updated successfully.");
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 3000);
+      closeEditModal();
+    } catch (err) {
+      console.error("Failed to update listing:", err);
+      toast.error(err.response?.data?.message || "Failed to update listing.");
+    } finally {
+      setIsSubmittingEdit(false);
+    }
   };
 
   return (
@@ -170,7 +210,7 @@ export default function MyListings() {
                           <Eye className="w-5 h-5" />
                         </button>
                       </Link>
-                      <button className="p-3 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all" title="Edit">
+                      <button onClick={() => openEditModal(item)} className="p-3 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all" title="Edit">
                         <Edit className="w-5 h-5" />
                       </button>
                       <button
@@ -201,6 +241,55 @@ export default function MyListings() {
           <button onClick={() => setShowToast(false)} className="ml-4 text-slate-400 hover:text-white transition-colors">
             <X className="w-5 h-5" />
           </button>
+        </div>
+      )}
+
+      {/* Edit Listing Modal */}
+      {editingItem && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0">
+              <h3 className="font-heading text-xl font-bold text-slate-900">Edit Listing</h3>
+              <button onClick={closeEditModal} className="p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-700 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto">
+              <form id="edit-listing-form" onSubmit={submitEditListing} className="space-y-5">
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Title</label>
+                  <input type="text" value={editForm.title} onChange={(e) => setEditForm(prev => ({...prev, title: e.target.value}))} required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Description</label>
+                  <textarea value={editForm.description} onChange={(e) => setEditForm(prev => ({...prev, description: e.target.value}))} required rows={3} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all resize-none"></textarea>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Price/Day (₹)</label>
+                    <input type="number" min="0" value={editForm.rentalPricePerDay} onChange={(e) => setEditForm(prev => ({...prev, rentalPricePerDay: e.target.value}))} required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Condition</label>
+                    <select value={editForm.condition} onChange={(e) => setEditForm(prev => ({...prev, condition: e.target.value}))} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none transition-all">
+                      <option value="New">New</option>
+                      <option value="Like New">Like New</option>
+                      <option value="Good">Good</option>
+                      <option value="Fair">Fair</option>
+                    </select>
+                  </div>
+                </div>
+              </form>
+            </div>
+            
+            <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-3 sticky bottom-0">
+              <Button type="button" variant="outline" onClick={closeEditModal} className="rounded-xl px-6 font-bold border-slate-200 text-slate-600 hover:bg-slate-100">Cancel</Button>
+              <Button type="submit" form="edit-listing-form" disabled={isSubmittingEdit} className="rounded-xl px-8 font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20">
+                {isSubmittingEdit ? <Loader2 className="w-5 h-5 animate-spin" /> : "Save Changes"}
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>

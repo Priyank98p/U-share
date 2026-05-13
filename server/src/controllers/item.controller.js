@@ -127,7 +127,8 @@ const getAllItems = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
-    .populate("ownerId", "fullname email rating department");
+    .populate("ownerId", "fullname email rating department")
+    .lean();
 
   const totalItems = await Item.countDocuments(filter);
 

@@ -37,6 +37,19 @@ const createBooking = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Cannot book your own item");
   }
 
+  const existingUserBooking = await Booking.findOne({
+    itemId,
+    borrowerId: req.user._id,
+    status: { $in: ["pending", "approved", "ongoing"] },
+  });
+
+  if (existingUserBooking) {
+    throw new ApiError(
+      400,
+      "You already have an active or pending booking for this item."
+    );
+  }
+
   const overLappingBooking = await Booking.findOne({
     itemId,
     status: { $in: ["approved", "ongoing"] },
@@ -101,7 +114,7 @@ const getUserBookings = asyncHandler(async (req, res) => {
   const bookings = await Booking.find({ borrowerId: req.user?._id })
     .populate({
       path: "itemId",
-      select: "title description category brand images rentalPricePerDay",
+      select: "title description category brand images rentalPricePerDay pickupLocation availableFrom availableTo condition isActive",
     })
     .populate({
       path: "ownerId",
@@ -124,17 +137,14 @@ const getUserBookings = asyncHandler(async (req, res) => {
 
 const getOwnerRequests = asyncHandler(async (req, res) => {
   const requests = await Booking.find({ ownerId: req.user._id })
-
     .populate({
       path: "itemId",
-      select: "title images category",
+      select: "title images category pickupLocation availableFrom availableTo condition isActive",
     })
-
     .populate({
       path: "borrowerId",
       select: "fullname email",
     })
-
     .sort({ createdAt: -1 });
 
   return res

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import DashboardSidebar from "@/components/DashboardSidebar";
 import { useToast } from "@/context/ToastContext";
 import {
-  CalendarDays, CreditCard, Clock, CheckCircle2, XCircle, ShoppingBag, Copy, Star
+  CalendarDays, CreditCard, Clock, CheckCircle2, XCircle, ShoppingBag, Copy, Star, MapPin
 } from "lucide-react";
 
 export default function MyRentals() {
@@ -159,6 +159,22 @@ export default function MyRentals() {
                         <CreditCard className="w-4 h-4" />
                         <span>₹{rental.totalPrice}</span>
                       </div>
+                      {rental.itemId?.pickupLocation && (
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                          <MapPin className="w-4 h-4 text-rose-400" />
+                          <span>Pickup: <span className="font-bold text-slate-800">{rental.itemId.pickupLocation}</span></span>
+                        </div>
+                      )}
+                      {(rental.itemId?.availableFrom || rental.itemId?.availableTo) && (
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                          <CalendarDays className="w-4 h-4 text-emerald-400" />
+                          <span>Available: <span className="font-bold text-slate-800">
+                            {rental.itemId?.availableFrom ? new Date(rental.itemId.availableFrom).toLocaleDateString("en-IN", { day:"numeric", month:"short" }) : "Now"}
+                            {" → "}
+                            {rental.itemId?.availableTo ? new Date(rental.itemId.availableTo).toLocaleDateString("en-IN", { day:"numeric", month:"short" }) : "Open"}
+                          </span></span>
+                        </div>
+                      )}
                     </div>
                     {['approved', 'ongoing'].includes(rental.status) && (
                       <div className="flex gap-3 pt-2">
@@ -239,6 +255,22 @@ export default function MyRentals() {
                         <CreditCard className="w-4 h-4" />
                         <span>₹{request.totalPrice}</span>
                       </div>
+                      {request.itemId?.pickupLocation && (
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                          <MapPin className="w-4 h-4 text-rose-400" />
+                          <span>Pickup: <span className="font-bold text-slate-800">{request.itemId.pickupLocation}</span></span>
+                        </div>
+                      )}
+                      {(request.itemId?.availableFrom || request.itemId?.availableTo) && (
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-600">
+                          <CalendarDays className="w-4 h-4 text-emerald-400" />
+                          <span>Available: <span className="font-bold text-slate-800">
+                            {request.itemId?.availableFrom ? new Date(request.itemId.availableFrom).toLocaleDateString("en-IN", { day:"numeric", month:"short" }) : "Now"}
+                            {" → "}
+                            {request.itemId?.availableTo ? new Date(request.itemId.availableTo).toLocaleDateString("en-IN", { day:"numeric", month:"short" }) : "Open"}
+                          </span></span>
+                        </div>
+                      )}
                     </div>
                     
                     {request.status === 'pending' && (
