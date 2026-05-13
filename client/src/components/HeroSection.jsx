@@ -19,14 +19,14 @@ const HeroSection = () => {
           </p>
           <div className="flex flex-wrap gap-4">
             <Link to="/browse">
-            <Button className="bg-[#4F46E5] text-white px-6 py-6 text-md cursor-pointer rounded-3xl transition-all ease-in hover:scale-103">
-              Browse rentals
-            </Button>
+              <Button className="bg-[#4F46E5] text-white px-6 py-6 text-md cursor-pointer rounded-3xl transition-all ease-in hover:scale-103">
+                Browse rentals
+              </Button>
             </Link>
             <Link to="/create-listing">
-            <Button className="bg-slate-200 cursor-pointer hover:scale-103 hover:bg-slate-900 text-md text-gray-600 hover:text-white border px-6 py-6 rounded-3xl transition-all ease-in hover:scale-105">
-              List an item
-            </Button>
+              <Button className="bg-slate-200 cursor-pointer hover:scale-103 hover:bg-slate-900 text-md text-gray-600 hover:text-white border px-6 py-6 rounded-3xl transition-all ease-in hover:scale-105">
+                List an item
+              </Button>
             </Link>
           </div>
         </div>
@@ -41,63 +41,70 @@ const HeroSection = () => {
             {/* Left Column of Grid */}
             <div className="space-y-4">
               <div className="bg-white p-2 rounded-2xl shadow-xl hover:-rotate-2 transition-all duration-300 cursor-pointer">
-                <img
-                  src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&q=80"
-                  alt="MacBook Pro"
-                  className="rounded-xl w-full object-cover"
-                />
-                <div className="p-3">
-                  <p className="font-heading font-bold text-sm text-slate-900">
-                    MacBook Pro M2
-                  </p>
-                  <p className="text-primary font-extrabold">₹500/day</p>
-                </div>
+                <Link to="/browse">
+                  <img
+                    src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=500&q=80"
+                    alt="MacBook Pro"
+                    className="rounded-xl w-full object-cover"
+                  />
+                  <div className="p-3">
+                    <p className="font-heading font-bold text-sm text-slate-900">
+                      MacBook Pro M2
+                    </p>
+                    <p className="text-primary font-extrabold">₹500/day</p>
+                  </div>
+                </Link>
               </div>
-
-              <div className="bg-white p-2 rounded-2xl shadow-xl hover:rotate-2 transition-all duration-300 cursor-pointer">
-                <img
-                  src="https://images.unsplash.com/photo-1532012197267-da84d127e765?w=500&q=80"
-                  alt="Textbooks"
-                  className="rounded-xl w-full object-cover"
-                />
-                <div className="p-3">
-                  <p className="font-heading font-bold text-sm text-slate-900">
-                    Bio 101 Textbooks
-                  </p>
-                  <p className="text-primary font-extrabold">₹100/day</p>
+                <div className="bg-white p-2 rounded-2xl shadow-xl hover:rotate-2 transition-all duration-300 cursor-pointer">
+              <Link to="/browse">
+                  <img
+                    src="https://images.unsplash.com/photo-1532012197267-da84d127e765?w=500&q=80"
+                    alt="Textbooks"
+                    className="rounded-xl w-full object-cover"
+                  />
+                  <div className="p-3">
+                    <p className="font-heading font-bold text-sm text-slate-900">
+                      Bio 101 Textbooks
+                    </p>
+                    <p className="text-primary font-extrabold">₹100/day</p>
+                  </div>
+              </Link>
                 </div>
-              </div>
             </div>
 
             {/* Right Column of Grid */}
             <div className="space-y-4">
-              <div className="bg-white p-2 rounded-2xl shadow-xl hover:rotate-3 transition-all duration-300 cursor-pointer">
-                <img
-                  src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500&q=80"
-                  alt="Camera"
-                  className="rounded-xl w-full object-cover"
-                />
-                <div className="p-3">
-                  <p className="font-heading font-bold text-sm text-slate-900">
-                    Sony Alpha Kit
-                  </p>
-                  <p className="text-primary font-extrabold">₹200/day</p>
+                <div className="bg-white p-2 rounded-2xl shadow-xl hover:rotate-3 transition-all duration-300 cursor-pointer">
+              <Link to="/browse">
+                  <img
+                    src="https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500&q=80"
+                    alt="Camera"
+                    className="rounded-xl w-full object-cover"
+                  />
+                  <div className="p-3">
+                    <p className="font-heading font-bold text-sm text-slate-900">
+                      Sony Alpha Kit
+                    </p>
+                    <p className="text-primary font-extrabold">₹200/day</p>
+                  </div>
+              </Link>
                 </div>
-              </div>
 
-              <div className="bg-white p-2 rounded-2xl shadow-xl hover:-rotate-3 transition-all duration-300 cursor-pointer">
-                <img
-                  src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80"
-                  alt="Headphones"
-                  className="rounded-xl w-full  object-cover"
-                />
-                <div className="p-3">
-                  <p className="font-heading font-bold text-sm text-slate-900">
-                    Noise Cancel Pro
-                  </p>
-                  <p className="text-primary font-extrabold">₹200/day</p>
+                <div className="bg-white p-2 rounded-2xl shadow-xl hover:-rotate-3 transition-all duration-300 cursor-pointer">
+              <Link to="/browse">
+                  <img
+                    src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80"
+                    alt="Headphones"
+                    className="rounded-xl w-full  object-cover"
+                  />
+                  <div className="p-3">
+                    <p className="font-heading font-bold text-sm text-slate-900">
+                      Noise Cancel Pro
+                    </p>
+                    <p className="text-primary font-extrabold">₹200/day</p>
+                  </div>
+              </Link>
                 </div>
-              </div>
             </div>
           </div>
         </div>
