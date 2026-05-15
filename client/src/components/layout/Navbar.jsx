@@ -74,7 +74,8 @@ export default function Navbar() {
     fetchUnread();
 
     // Listen for real-time unread updates via socket
-    const socket = io("http://localhost:3000", { withCredentials: true });
+    const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+    const socket = io(SOCKET_URL, { withCredentials: true });
     socket.on(`unread_update_${user._id}`, () => {
       fetchUnread();
     });

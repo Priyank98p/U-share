@@ -1,0 +1,86 @@
+# U-Share Architecture and System Flow
+
+This document details the architectural design, Data Flow Diagrams (DFD), and Entity-Relationship (ER) structure of the U-Share application.
+
+## 1. High-Level Architecture Diagram
+The application follows a classic Three-Tier MERN stack architecture with WebSocket support for real-time features.
+
+[Client-Side (React.js + Vite)]
+      |
+      | HTTP (REST) / WSS (WebSocket)
+      v
+[Server-Side (Node.js + Express.js + Socket.io)]
+      |
+      | Mongoose (ODM)
+      v
+[Database (MongoDB Atlas)]
+
+External Services:
+- Cloudinary: Used by the Server for storing Image assets.
+- Razorpay: Used by the Client and Server for payment processing.
+- Resend: Used by the Server for transactional emails.
+
+## 2. Entity-Relationship (ER) Diagram Overview
+
+### Entities and Relationships:
+1. User
+   - _id, fullname, email, password, role, isVerified, studentIdCard, isBlocked, verificationRejected.
+   - 1:N relationship with Item (Owner)
+   - 1:N relationship with Booking (Borrower and Owner)
+   - 1:N relationship with Review (Reviewer and Reviewee)
+
+2. Item
+   - _id, ownerId (Ref: User), title, description, category, rentalPricePerDay, depositAmount, images, condition, isActive.
+   - 1:N relationship with Booking
+
+3. Booking
+   - _id, itemId (Ref: Item), borrowerId (Ref: User), ownerId (Ref: User), startDate, endDate, status, totalPrice, paymentStatus.
+   - Status transitions: pending -> approved -> ongoing -> return_requested -> returned.
+   - 1:1 relationship with Review
+
+4. Review
+   - _id, bookingId (Ref: Booking), itemId (Ref: Item), reviewerId (Ref: User), revieweeId (Ref: User), rating, comment.
+
+5. Message / Chat
+   - senderId (Ref: User), receiverId (Ref: User), content, isRead.
+
+## 3. Data Flow Diagrams (DFD)
+
+### Level 0 DFD (Context Diagram)
+[Student User] <====(Search/Rent/Chat)====> [U-Share System] <====(Manage/Verify)====> [Admin]
+                                                   |
+                                                   v
+                                          [External Services: Payment Gateway, Image Storage]
+
+### Level 1 DFD (Core Processes)
+1. User Authentication Flow
+   [Guest] -> (Register/Login via API) -> [Auth Middleware] -> [DB: Users] -> (Returns JWT) -> [Authenticated User]
+
+2. Verification Flow
+   [User] -> (Upload ID) -> [Cloudinary] -> [DB: Users status=pending]
+   [Admin] -> (Review ID) -> (Approve/Reject API) -> [DB: Users isVerified=true/false]
+
+3. Item Listing Flow
+   [Verified User] -> (Submit Item Details + Images) -> [Cloudinary for Images] -> [DB: Items]
+   [System] -> (Invalidates Cache) -> [Frontend: Marketplace]
+
+4. Booking Flow
+   [Borrower] -> (Select Dates -> Create Booking API) -> [DB: Bookings status=pending]
+   [Owner] -> (Approve/Reject Request API) -> [DB: Bookings status=approved]
+   [Borrower] -> (Pick up item) -> (Status becomes ongoing)
+   [Borrower] -> (Initiate Return API) -> [DB: Bookings status=return_requested]
+   [Owner] -> (Accept Return API) -> [DB: Bookings status=returned]
+
+5. Review Flow
+   [Borrower/Owner] -> (Verify booking status == returned) -> (Submit Review API) -> [DB: Reviews]
+   [System] -> (Calculates Item/User Rating) -> [Frontend: Item Detail / Profile]
+
+6. Real-Time Chat Flow
+   [User A] -> (Emit "sendMessage" Event) -> [Socket.io Server] -> (Save to DB: Messages) -> (Emit "receiveMessage" Event) -> [User B]
+
+## 4. Security Flow
+- Every incoming request first hits the Rate Limiter (general or auth-specific).
+- Requests pass through `helmet` and `express-mongo-sanitize` to strip malicious headers and payloads.
+- If a route is protected, the `verifyJWT` middleware checks the `Authorization` header or cookies.
+- If an admin route is accessed, the `isAdmin` middleware checks `req.user.role === 'admin'`.
+- Business logic ensures a user is not blocked (`user.isBlocked`) and is verified (`user.isVerified`) before creating listings or bookings.

@@ -47,7 +47,8 @@ export default function Messages() {
     // Prevent chatting with yourself
     if (recipientId === user._id) return;
 
-    const newSocket = io("http://localhost:3000", {
+    const SOCKET_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+    const newSocket = io(SOCKET_URL, {
       withCredentials: true,
     });
     socketRef.current = newSocket;
