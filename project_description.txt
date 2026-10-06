@@ -1,0 +1,71 @@
+# U-Share: Comprehensive Project Description
+
+## 1. Project Overview
+U-Share is a modern, student-centric peer-to-peer rental marketplace designed exclusively for campus communities. The platform allows students to easily rent out their belongings (such as textbooks, electronics, sports equipment, etc.) to peers. It promotes a circular economy on campus, making resources more accessible and affordable for students while providing a secure and trusted environment.
+
+## 2. Core Modules & Functionalities
+
+### 2.1 User Authentication & Authorization
+- **Registration & Login**: Secure user onboarding using JWT (JSON Web Tokens). Students register with their university email or personal email.
+- **Verification System**: To ensure campus safety, users are required to upload a valid student ID card. Administrators review and approve/reject these verifications.
+- **Role-Based Access Control (RBAC)**: Distinct roles for 'User' (student) and 'Admin'. Admins have privileged access to moderation and analytics panels.
+- **Password Management**: Forgot/Reset password functionality implemented using Resend SDK for secure email delivery.
+
+### 2.2 Marketplace & Item Management
+- **Browsing & Discovery**: Users can view available items. Features advanced filtering by categories, price ranges, and condition.
+- **Item Listings**: Users can create listings by uploading images, setting rental prices, and adding descriptions. Images are stored securely on Cloudinary.
+- **Wishlist**: Users can save items to a wishlist for later viewing.
+- **Review & Ratings**: Users can leave reviews for items and users, ensuring a trust-based ecosystem.
+
+### 2.3 Booking & Transactions
+- **Booking Workflow**: Borrowers can select rental dates and initiate a booking request. 
+- **Payment Gateway**: Integration with Razorpay ensures seamless online transactions. A Cash-on-Delivery (COD) alternative is also provided.
+- **Order Tracking**: Users can track their active rentals and listings through dedicated dashboard pages (My Rentals, My Listings).
+
+### 2.4 Communication
+- **Real-Time Chat**: Integrated Socket.io allows seamless, instant communication between borrowers and owners. Users can negotiate prices or arrange meetup locations securely within the app.
+
+### 2.5 Admin Panel
+- **Dashboard Analytics**: Real-time insights into platform performance, including user growth, total listings, active rentals, and revenue generated.
+- **User Moderation**: Admins manage pending ID verifications, approving or rejecting them to maintain platform integrity.
+- **Listing Management**: Admins have the ability to oversee all marketplace listings to prevent prohibited items from being shared.
+
+## 3. Technology Stack
+
+### Frontend (Client-Side)
+- **React.js**: Core UI framework for building dynamic, single-page applications.
+- **Tailwind CSS**: Utility-first CSS framework used for crafting a premium, responsive, and modern user interface.
+- **Redux Toolkit**: Centralized state management for handling user state, cart/booking data, and UI toggles.
+- **Vite**: Ultra-fast build tool and development server.
+- **Lucide React & Framer Motion**: For high-quality iconography and smooth UI animations.
+
+### Backend (Server-Side)
+- **Node.js & Express.js**: Fast, scalable backend runtime and routing framework handling RESTful API requests.
+- **MongoDB & Mongoose**: NoSQL database for flexible data modeling (Users, Items, Bookings, Chats, Reviews). Mongoose provides schema validation.
+- **Socket.io**: Enables bi-directional, real-time communication for the chat module.
+
+### Third-Party Services
+- **Cloudinary**: Cloud-based image management for user avatars and item photos.
+- **Razorpay**: Secure payment processing for online bookings.
+- **Resend**: Transactional email service for authentication flows.
+
+## 4. Application Flow
+
+1. **Onboarding**: A student visits the platform and creates an account. They submit their student ID for verification.
+2. **Browsing**: The student explores the marketplace, using filters to find a specific item (e.g., a scientific calculator).
+3. **Interaction**: 
+   - The student clicks on an item to view details.
+   - They use the built-in real-time chat to message the owner regarding availability or condition.
+4. **Booking & Payment**: 
+   - Once agreed, the student selects rental dates and proceeds to checkout.
+   - They choose Razorpay for online payment or COD. 
+   - The booking record is securely created in the database.
+5. **Fulfillment**: The owner receives a notification and hands over the item on campus.
+6. **Return & Review**: After the rental period ends, the item is returned, and both parties can leave a review for each other.
+
+## 5. Security & Architecture
+- **Stateless Auth**: JWT ensures secure API access without maintaining session state on the server.
+- **Data Validation**: Mongoose schemas strictly validate all incoming data to prevent injection attacks.
+- **API Protection**: Important routes are protected via authentication middlewares, verifying tokens on every sensitive request. 
+- **Environment Variables**: Sensitive keys (Razorpay, Cloudinary, DB URIs) are securely managed via `.env` files.
+- **Rate Limiting**: Protection against brute-force attacks on auth endpoints.
